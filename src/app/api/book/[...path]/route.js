@@ -315,12 +315,17 @@ async function getPageCountFromThumbnails(bookName) {
     if (USE_BLOB) {
         // ספור תמונות מ-Blob Storage
         try {
-            console.log(`Counting thumbnails from Blob for: ${bookName}`)
-            const blobs = await listFiles(`thumbnails/${bookName}/`)
-            console.log(`Found ${blobs.length} blobs for ${bookName}`)
+            console.log(`📊 Counting thumbnails from Blob for: "${bookName}"`)
+            const prefix = `thumbnails/${bookName}/`
+            console.log(`   Searching with prefix: "${prefix}"`)
+            const blobs = await listFiles(prefix)
+            console.log(`   Found ${blobs.length} blobs`)
+            if (blobs.length > 0) {
+                console.log(`   First blob: ${blobs[0].pathname}`)
+            }
             return blobs.length || null
         } catch (error) {
-            console.error('Error counting thumbnails from Blob:', error)
+            console.error('❌ Error counting thumbnails from Blob:', error)
             return null
         }
     } else {
