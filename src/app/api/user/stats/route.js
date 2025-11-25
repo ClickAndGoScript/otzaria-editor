@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../auth/[...nextauth]/route'
-import { saveJSON, readJSON, saveText, readText, listFiles } from '@/lib/storage'
-import path from 'path'
-
-
+import { listFiles } from '@/lib/storage'
 
 export async function GET(request) {
   try {
@@ -29,43 +26,45 @@ export async function GET(request) {
     const recentActivity = []
 
     for (const file of jsonFiles) {
-      const bookName = path.basename(file.pathname, '.json')
+      const bookName = file.pathname.split('/').pop().replace('.json', '')
       
-      const response = await fetch(file.url)
-      if (!response.ok) continue
-      
-      const pages = await response.json()
+      try {
+        const response = await fetch(file.url)
+        if (!response.ok) continue
+        
+        const pages = await response.json()
 
-      pages.forEach(page => {
-        if (page.claimedById === userId) {
-          myPages++
-          
-          if (page.status === 'completed') {
-            completedPages++
-          } else if (page.status === 'in-progress') {
-            inProgressPages++
+        pages.forEach(page => {
+          if (page.claimedById === userId) {
+            myPages++
+            
+            if (page.status === 'completed') {
+              completedPages++
+            } else if (page.status === 'in-progress') {
+              inProgressPages++
+            }
+
+            // הוסף לפעילות אחרונה
+            recentActivity.push({
+              bookName,
+              pageNumber: page.number,
+              status: page.status,
+              claimedAt: page.claimedAt,
+              completedAt: page.completedAt
+            })
           }
-
-          // הוסף לפעילות אחרונה
-          recentActivity.push({
-            bookName,
-            bookPath: `${bookName}.pdf`,
-            pageNumber: page.number,
-            status: page.status,
-            date: formatDate(page.status === 'completed' ? page.completedAt : page.claimedAt)
-          })
-        }
-      })
+        })
+      } catch (error) {
+        console.error(`Error loading book ${bookName}:`, error)
+      }
     }
 
-    // מיין לפי תאריך (האחרונים ראשונים) וקח רק 10
+    // מיין לפי תאריך אחרון
     recentActivity.sort((a, b) => {
-      const dateA = new Date(a.date)
-      const dateB = new Date(b.date)
+      const dateA = new Date(a.completedAt || a.claimedAt)
+      const dateB = new Date(b.completedAt || b.claimedAt)
       return dateB - dateA
     })
-
-    const limitedActivity = recentActivity.slice(0, 10)
 
     return NextResponse.json({
       success: true,
@@ -73,36 +72,15 @@ export async function GET(request) {
         myPages,
         completedPages,
         inProgressPages,
-        recentActivity: limitedActivity
-      }
+        points: (completedPages * 10) + (inProgressPages * 2)
+      },
+      recentActivity: recentActivity.slice(0, 10) // 10 אחרונים
     })
   } catch (error) {
     console.error('Error loading user stats:', error)
     return NextResponse.json(
-      { success: false, error: 'שגיאה בטעינת הנתונים' },
+      { success: false, error: 'שגיאה בטעינת סטטיסטיקות' },
       { status: 500 }
     )
   }
-}
-
-function formatDate(isoDate) {
-  if (!isoDate) return 'לא ידוע'
-  
-  const date = new Date(isoDate)
-  const now = new Date()
-  const diffMs = now - date
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
-
-  if (diffMins < 1) return 'עכשיו'
-  if (diffMins < 60) return `לפני ${diffMins} דקות`
-  if (diffHours < 24) return `לפני ${diffHours} שעות`
-  if (diffDays < 7) return `לפני ${diffDays} ימים`
-  
-  return date.toLocaleDateString('he-IL', { 
-    day: 'numeric', 
-    month: 'long',
-    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
-  })
 }

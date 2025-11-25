@@ -26,15 +26,20 @@ async function saveUsers(users) {
 
 let usersCache = null
 let lastLoad = 0
-const CACHE_TTL = 5000 // 5 seconds
+const CACHE_TTL = 2000 // 2 seconds - shorter cache for faster updates
 
-async function getUsers() {
+async function getUsers(forceRefresh = false) {
   const now = Date.now()
-  if (!usersCache || (now - lastLoad) > CACHE_TTL) {
+  if (forceRefresh || !usersCache || (now - lastLoad) > CACHE_TTL) {
     usersCache = await loadUsers()
     lastLoad = now
   }
   return usersCache
+}
+
+// פונקציה לרענון cache ידני
+export async function refreshUsersCache() {
+  return await getUsers(true)
 }
 
 export async function hashPassword(password) {
@@ -46,7 +51,8 @@ export async function verifyPassword(password, hashedPassword) {
 }
 
 export async function createUser(email, password, name) {
-  const users = await getUsers()
+  // רענן cache לפני בדיקה
+  const users = await getUsers(true)
   
   // בדיקה אם האימייל קיים
   const existingEmail = users.find(user => user.email === email)
@@ -73,6 +79,7 @@ export async function createUser(email, password, name) {
   users.push(user)
   await saveUsers(users)
   usersCache = users // עדכן cache
+  lastLoad = Date.now()
   return { id: user.id, email: user.email, name: user.name, role: user.role }
 }
 
@@ -82,7 +89,8 @@ export async function getUserByEmail(email) {
 }
 
 export async function getUserByEmailOrUsername(identifier) {
-  const users = await getUsers()
+  // רענן cache כדי לקבל משתמשים עדכניים
+  const users = await getUsers(true)
   // חיפוש לפי אימייל או שם משתמש
   return users.find(user => 
     user.email === identifier || 

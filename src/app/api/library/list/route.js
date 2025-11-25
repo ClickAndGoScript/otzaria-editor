@@ -1,48 +1,35 @@
 import { NextResponse } from 'next/server'
-import { saveJSON, readJSON, saveText, readText, listFiles } from '@/lib/storage'
-import path from 'path'
-
-
-
+import { listFiles } from '@/lib/storage'
 
 export async function GET() {
   try {
     const books = []
-
-    if (!fs.existsSync(CONTENT_PATH)) {
-      return NextResponse.json({ success: true, books: [] })
-    }
-
-    const contentFiles = fs.readdirSync(CONTENT_PATH).filter(f => f.endsWith('.json'))
-
-    for (const file of contentFiles) {
-      const bookPath = file.replace('.json', '')
-      const contentFile = path.join(CONTENT_PATH, file)
-      const pagesFile = path.join(PAGES_PATH, file)
-
-      try {
-        const content = JSON.parse(await readText(contentFile))
-        
-        let totalPages = 0
-        let completedPages = 0
-
-        if (fs.existsSync(pagesFile)) {
-          const pages = JSON.parse(await readText(pagesFile))
-          totalPages = pages.length
-          completedPages = pages.filter(p => p.status === 'completed').length
+    
+    // קבל את כל קבצי ה-JSON של הספרים
+    const blobs = await listFiles('data/pages/')
+    
+    for (const blob of blobs) {
+      if (blob.pathname.endsWith('.json')) {
+        try {
+          const response = await fetch(blob.url)
+          if (!response.ok) continue
+          
+          const pages = await response.json()
+          const bookName = blob.pathname.split('/').pop().replace('.json', '')
+          
+          const totalPages = pages.length
+          const completedPages = pages.filter(p => p.status === 'completed').length
+          
+          books.push({
+            path: bookName,
+            name: bookName,
+            thumbnail: pages[0]?.thumbnail || null,
+            totalPages,
+            completedPages
+          })
+        } catch (error) {
+          console.error(`Error loading book:`, error)
         }
-
-        books.push({
-          path: bookPath,
-          name: content.name || bookPath,
-          thumbnail: content.thumbnail || null,
-          totalPages,
-          completedPages,
-          author: content.author || null,
-          category: content.category || null
-        })
-      } catch (error) {
-        console.error(`Error loading book ${bookPath}:`, error)
       }
     }
 

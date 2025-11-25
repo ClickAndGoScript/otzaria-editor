@@ -8,7 +8,8 @@ export async function saveJSON(path, data) {
     const blob = await put(BLOB_PREFIX + path, JSON.stringify(data, null, 2), {
       access: 'public',
       contentType: 'application/json',
-      addRandomSuffix: false
+      addRandomSuffix: false,
+      allowOverwrite: true
     })
     return blob
   } catch (error) {
@@ -38,7 +39,8 @@ export async function saveText(path, content) {
     const blob = await put(BLOB_PREFIX + path, content, {
       access: 'public',
       contentType: 'text/plain; charset=utf-8',
-      addRandomSuffix: false
+      addRandomSuffix: false,
+      allowOverwrite: true
     })
     return blob
   } catch (error) {

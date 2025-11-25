@@ -1,11 +1,5 @@
 import { NextResponse } from 'next/server'
-import { saveJSON, readJSON, saveText, readText, listFiles } from '@/lib/storage'
-import path from 'path'
-
-
-const UPLOADS_META_PATH = path.join(process.cwd(), 'data', 'uploads-meta.json')
-
-// יצירת תיקייה אם לא קיימת
+import { saveJSON, readJSON, saveText } from '@/lib/storage'
 
 
 export async function POST(request) {
@@ -50,7 +44,7 @@ export async function POST(request) {
     const timestamp = Date.now()
     const safeBookName = bookName.replace(/[^a-zA-Z0-9א-ת\s]/g, '_')
     const fileName = `${safeBookName}_${timestamp}.txt`
-    const filePath = path.join(UPLOADS_PATH, fileName)
+    const filePath = `data/uploads/${fileName}`
 
     // שמור את הקובץ
     await saveText(filePath, content)
@@ -71,13 +65,10 @@ export async function POST(request) {
     }
 
     // טען או צור קובץ מטא-דאטה
-    let allUploads = []
-    if (fs.existsSync(UPLOADS_META_PATH)) {
-      allUploads = await readJSON('data/UPLOADS_META.json') || []
-    }
+    let allUploads = await readJSON('data/uploads-meta.json') || []
 
     allUploads.unshift(uploadMeta) // הוסף בהתחלה (האחרונים ראשונים)
-    await saveJSON('data/UPLOADS_META.json', allUploads)
+    await saveJSON('data/uploads-meta.json', allUploads)
 
     console.log(`✅ Book uploaded: ${fileName} by ${userName}`)
 
@@ -100,14 +91,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 
-    if (!fs.existsSync(UPLOADS_META_PATH)) {
-      return NextResponse.json({
-        success: true,
-        uploads: []
-      })
-    }
-
-    let allUploads = await readJSON('data/UPLOADS_META.json') || []
+    let allUploads = await readJSON('data/uploads-meta.json') || []
 
     // אם יש userId, סנן רק את ההעלאות שלו
     if (userId) {
