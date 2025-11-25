@@ -38,14 +38,17 @@ export default function Header() {
                   <span>ניהול</span>
                 </Link>
               )}
-              <Link href="/dashboard" className="flex items-center gap-3 text-on-surface hover:text-primary transition-colors">
+              <Link 
+                href="/dashboard" 
+                className="flex items-center justify-center hover:opacity-80 transition-opacity"
+                title={session.user.name}
+              >
                 <div 
-                  className="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-sm shadow-md"
+                  className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-base shadow-md hover:shadow-lg transition-shadow"
                   style={{ backgroundColor: getAvatarColor(session.user.name) }}
                 >
                   {getInitial(session.user.name)}
                 </div>
-                <span>{session.user.name}</span>
               </Link>
               <button 
                 onClick={() => signOut({ callbackUrl: '/' })}

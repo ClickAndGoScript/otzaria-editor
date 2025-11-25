@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
+import { getAvatarColor, getInitial } from '@/lib/avatar-colors'
 
 export default function UsersPage() {
   const [users, setUsers] = useState([])
@@ -123,14 +124,7 @@ export default function UsersPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {sortedUsers.map((user, index) => {
-                  const colors = [
-                    'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 
-                    'bg-yellow-500', 'bg-red-500', 'bg-indigo-500', 'bg-teal-500',
-                    'bg-orange-500', 'bg-cyan-500', 'bg-lime-500', 'bg-amber-500'
-                  ]
-                  const avatarColor = colors[index % colors.length]
-                  
+                {sortedUsers.map((user) => {
                   return (
                     <div
                       key={user.id}
@@ -138,8 +132,11 @@ export default function UsersPage() {
                     >
                       <div className="flex items-center gap-3">
                         {/* Avatar */}
-                        <div className={`w-12 h-12 rounded-full ${avatarColor} flex items-center justify-center text-white text-lg font-bold flex-shrink-0`}>
-                          {user.name.charAt(0).toUpperCase()}
+                        <div 
+                          className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold flex-shrink-0 shadow-md"
+                          style={{ backgroundColor: getAvatarColor(user.name) }}
+                        >
+                          {getInitial(user.name)}
                         </div>
 
                         {/* User Info */}
