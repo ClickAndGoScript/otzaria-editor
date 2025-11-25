@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { getAvatarColor, getInitial } from '@/lib/avatar-colors'
 
 export default function UsersManagementPage() {
   const { data: session, status } = useSession()
@@ -144,8 +145,11 @@ export default function UsersManagementPage() {
                     <tr key={user.id} className="hover:bg-surface/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center">
-                            <span className="material-symbols-outlined text-primary">person</span>
+                          <div 
+                            className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-lg shadow-md"
+                            style={{ backgroundColor: getAvatarColor(user.name) }}
+                          >
+                            {getInitial(user.name)}
                           </div>
                           <span className="font-medium text-on-surface">{user.name}</span>
                         </div>

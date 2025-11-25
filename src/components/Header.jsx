@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
+import { getAvatarColor, getInitial } from '@/lib/avatar-colors'
 
 export default function Header() {
   const { data: session } = useSession()
@@ -37,9 +38,14 @@ export default function Header() {
                   <span>ניהול</span>
                 </Link>
               )}
-              <Link href="/dashboard" className="flex items-center gap-2 text-on-surface hover:text-primary transition-colors">
-                <span className="material-symbols-outlined">person</span>
-                <span>איזור אישי</span>
+              <Link href="/dashboard" className="flex items-center gap-3 text-on-surface hover:text-primary transition-colors">
+                <div 
+                  className="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-sm shadow-md"
+                  style={{ backgroundColor: getAvatarColor(session.user.name) }}
+                >
+                  {getInitial(session.user.name)}
+                </div>
+                <span>{session.user.name}</span>
               </Link>
               <button 
                 onClick={() => signOut({ callbackUrl: '/' })}
