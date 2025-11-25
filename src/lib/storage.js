@@ -77,7 +77,13 @@ export async function deleteFile(url) {
 // רשימת קבצים
 export async function listFiles(prefix) {
   try {
-    const { blobs } = await list({ prefix: BLOB_PREFIX + prefix })
+    const fullPrefix = BLOB_PREFIX + prefix
+    console.log('🔍 Listing files with prefix:', fullPrefix)
+    const { blobs } = await list({ prefix: fullPrefix })
+    console.log('📦 Found blobs:', blobs.length)
+    if (blobs.length > 0) {
+      console.log('📄 First blob:', blobs[0].pathname)
+    }
     return blobs
   } catch (error) {
     console.error('Error listing files:', error)

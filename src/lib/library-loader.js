@@ -54,25 +54,34 @@ async function scanBlobThumbnails() {
     for (const blob of blobs) {
       console.log('  Processing blob:', blob.pathname)
       
-      // נתיב לדוגמה: thumbnails/חוות דעת/page-1.jpg
+      // נתיב לדוגמה: dev/thumbnails/חוות דעת/page-1.jpg
       const pathParts = blob.pathname.split('/')
       console.log('    Path parts:', pathParts)
       
-      if (pathParts.length < 3) {
+      // צריך לפחות 4 חלקים: dev/thumbnails/bookName/file.jpg
+      if (pathParts.length < 4) {
         console.log('    ⏭️  Skipping - not enough path parts')
         continue
       }
 
-      const bookName = pathParts[1]
+      // pathParts[0] = 'dev'
+      // pathParts[1] = 'thumbnails'
+      // pathParts[2] = שם הספר
+      const bookName = pathParts[2]
       console.log('    📖 Book name:', bookName)
       
       if (!books.has(bookName)) {
+        // המר Date object ל-string
+        const uploadDate = blob.uploadedAt instanceof Date 
+          ? blob.uploadedAt.toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0]
+          
         books.set(bookName, {
           id: bookName,
           name: bookName,
           type: 'file',
           status: 'available',
-          lastEdit: blob.uploadedAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+          lastEdit: uploadDate,
           editor: null,
           path: bookName,
           pageCount: 0,
