@@ -5,15 +5,15 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import LibraryTree from '@/components/LibraryTree'
 import { statusConfig } from '@/lib/library-data'
+import { getAvatarColor, getInitial } from '@/lib/avatar-colors'
 
 export default function LibraryPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
-  const [viewMode, setViewMode] = useState('list') // רק רשימה
+  // viewMode הוסר - רק מצב רשימה
   const [selectedFile, setSelectedFile] = useState(null)
   const [libraryData, setLibraryData] = useState([])
   const [loading, setLoading] = useState(true)
@@ -24,17 +24,30 @@ export default function LibraryPage() {
     async function loadLibrary() {
       try {
         setLoading(true)
-        const response = await fetch('/api/library')
+        
+        // הוסף timeout של 10 שניות
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000)
+        
+        const response = await fetch('/api/library', {
+          signal: controller.signal
+        })
+        clearTimeout(timeoutId)
+        
         const result = await response.json()
         
         if (result.success) {
-          setLibraryData(result.data)
+          setLibraryData(result.data || [])
         } else {
           setError(result.error || 'שגיאה בטעינת הספרייה')
         }
       } catch (err) {
         console.error('Error loading library:', err)
-        setError('שגיאה בטעינת הספרייה')
+        if (err.name === 'AbortError') {
+          setError('הטעינה לקחה יותר מדי זמן. אנא נסה שוב.')
+        } else {
+          setError('שגיאה בטעינת הספרייה: ' + err.message)
+        }
       } finally {
         setLoading(false)
       }
@@ -162,15 +175,18 @@ export default function LibraryPage() {
 
           <div className="flex items-center gap-4">
             {session ? (
-              <>
-                <Link href="/dashboard" className="flex items-center gap-2 text-on-surface hover:text-primary transition-colors">
-                  <span className="material-symbols-outlined">person</span>
-                  <span className="hidden md:inline">איזור אישי</span>
-                </Link>
-                <div className="text-left hidden md:block">
-                  <p className="text-sm font-medium text-on-surface">{session.user.name}</p>
+              <Link 
+                href="/dashboard" 
+                className="flex items-center justify-center hover:opacity-80 transition-opacity"
+                title={session.user.name}
+              >
+                <div 
+                  className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-base shadow-md hover:shadow-lg transition-shadow"
+                  style={{ backgroundColor: getAvatarColor(session.user.name) }}
+                >
+                  {getInitial(session.user.name)}
                 </div>
-              </>
+              </Link>
             ) : (
               <Link href="/auth/login" className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-accent transition-colors">
                 <span className="material-symbols-outlined">login</span>

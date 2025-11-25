@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { getAvatarColor, getInitial } from '@/lib/avatar-colors'
 
 const pageStatusConfig = {
   available: {
@@ -232,9 +233,18 @@ export default function BookPage() {
           </div>
 
           {session && (
-            <div className="text-left">
-              <p className="text-sm font-medium text-on-surface">{session.user.name}</p>
-            </div>
+            <Link 
+              href="/dashboard" 
+              className="flex items-center justify-center hover:opacity-80 transition-opacity"
+              title={session.user.name}
+            >
+              <div 
+                className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-base shadow-md hover:shadow-lg transition-shadow"
+                style={{ backgroundColor: getAvatarColor(session.user.name) }}
+              >
+                {getInitial(session.user.name)}
+              </div>
+            </Link>
           )}
         </div>
       </header>

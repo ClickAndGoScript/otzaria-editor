@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { getAvatarColor, getInitial } from '@/lib/avatar-colors'
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -75,9 +76,12 @@ export default function DashboardPage() {
           </Link>
           
           <div className="flex items-center gap-4">
-            <div className="text-left">
-              <p className="font-medium text-on-surface">{session.user.name}</p>
-              <p className="text-sm text-on-surface/60">{session.user.email}</p>
+            <div 
+              className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-base shadow-md"
+              style={{ backgroundColor: getAvatarColor(session.user.name) }}
+              title={session.user.name}
+            >
+              {getInitial(session.user.name)}
             </div>
             <button
               onClick={() => signOut({ callbackUrl: '/' })}
