@@ -14,9 +14,16 @@ const USE_BLOB = process.env.USE_BLOB_STORAGE === 'true' || process.env.VERCEL_E
  */
 export async function loadLibraryStructure() {
   try {
+    console.log('🚀 Loading library structure...')
+    console.log('   USE_BLOB:', USE_BLOB)
+    console.log('   VERCEL_ENV:', process.env.VERCEL_ENV)
+    console.log('   USE_BLOB_STORAGE:', process.env.USE_BLOB_STORAGE)
+    
     if (USE_BLOB) {
+      console.log('   📦 Using Blob Storage')
       return await scanBlobThumbnails()
     } else {
+      console.log('   📁 Using local filesystem')
       if (!fs.existsSync(THUMBNAILS_PATH)) {
         console.warn('Thumbnails directory does not exist:', THUMBNAILS_PATH)
         return []
@@ -34,15 +41,30 @@ export async function loadLibraryStructure() {
  */
 async function scanBlobThumbnails() {
   try {
+    console.log('🔍 Scanning Blob Storage for thumbnails...')
     const blobs = await listFiles('thumbnails/')
+    console.log('📦 Total blobs found:', blobs.length)
+    
+    if (blobs.length > 0) {
+      console.log('📄 First blob example:', blobs[0])
+    }
+    
     const books = new Map()
 
     for (const blob of blobs) {
+      console.log('  Processing blob:', blob.pathname)
+      
       // נתיב לדוגמה: thumbnails/חוות דעת/page-1.jpg
       const pathParts = blob.pathname.split('/')
-      if (pathParts.length < 3) continue
+      console.log('    Path parts:', pathParts)
+      
+      if (pathParts.length < 3) {
+        console.log('    ⏭️  Skipping - not enough path parts')
+        continue
+      }
 
       const bookName = pathParts[1]
+      console.log('    📖 Book name:', bookName)
       
       if (!books.has(bookName)) {
         books.set(bookName, {
@@ -56,14 +78,16 @@ async function scanBlobThumbnails() {
           pageCount: 0,
           thumbnailsPath: `/thumbnails/${bookName}`,
         })
+        console.log('    ✅ Created book entry')
       }
 
       books.get(bookName).pageCount++
     }
 
+    console.log('📚 Total books found in Blob:', books.size)
     return Array.from(books.values())
   } catch (error) {
-    console.error('Error scanning blob thumbnails:', error)
+    console.error('❌ Error scanning blob thumbnails:', error)
     return []
   }
 }
@@ -76,21 +100,34 @@ function scanThumbnailsDirectory() {
   const books = []
   
   try {
+    console.log('📂 Scanning thumbnails directory:', THUMBNAILS_PATH)
     const entries = fs.readdirSync(THUMBNAILS_PATH, { withFileTypes: true })
+    console.log('📁 Found entries:', entries.length)
     
     entries.forEach((entry) => {
+      console.log('  - Entry:', entry.name, 'isDirectory:', entry.isDirectory())
+      
       // דלג על קבצים מוסתרים
-      if (entry.name.startsWith('.')) return
+      if (entry.name.startsWith('.')) {
+        console.log('    ⏭️  Skipping hidden file')
+        return
+      }
       
       if (entry.isDirectory()) {
         const bookPath = path.join(THUMBNAILS_PATH, entry.name)
+        console.log('    📖 Scanning book:', entry.name)
         const bookData = scanBookDirectory(entry.name, bookPath)
         
         if (bookData) {
+          console.log('    ✅ Book added:', bookData.name, 'pages:', bookData.pageCount)
           books.push(bookData)
+        } else {
+          console.log('    ❌ Book data is null')
         }
       }
     })
+    
+    console.log('📚 Total books found:', books.length)
   } catch (error) {
     console.error('Error scanning thumbnails directory:', error)
   }
@@ -103,7 +140,9 @@ function scanThumbnailsDirectory() {
  */
 function scanBookDirectory(bookName, bookPath) {
   try {
+    console.log('      📂 Reading directory:', bookPath)
     const files = fs.readdirSync(bookPath)
+    console.log('      📄 Total files:', files.length)
     
     // סנן רק קבצי תמונות
     const imageFiles = files.filter(file => {
@@ -111,8 +150,10 @@ function scanBookDirectory(bookName, bookPath) {
       return ['.jpg', '.jpeg', '.png', '.webp'].includes(ext)
     })
     
+    console.log('      🖼️  Image files:', imageFiles.length)
+    
     if (imageFiles.length === 0) {
-      console.warn(`No images found in book: ${bookName}`)
+      console.warn(`      ⚠️  No images found in book: ${bookName}`)
       return null
     }
     
@@ -122,7 +163,7 @@ function scanBookDirectory(bookName, bookPath) {
     // קרא מטא-דאטה אם קיימת
     const stats = fs.statSync(bookPath)
     
-    return {
+    const bookData = {
       id: bookName,
       name: bookName,
       type: 'file',
@@ -133,8 +174,11 @@ function scanBookDirectory(bookName, bookPath) {
       pageCount: pageCount,
       thumbnailsPath: `/thumbnails/${bookName}`,
     }
+    
+    console.log('      ✅ Book data created:', JSON.stringify(bookData, null, 2))
+    return bookData
   } catch (error) {
-    console.error('Error scanning book directory:', bookName, error)
+    console.error('      ❌ Error scanning book directory:', bookName, error)
     return null
   }
 }
