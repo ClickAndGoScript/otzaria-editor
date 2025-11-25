@@ -228,11 +228,17 @@ async function createPagesData(numPages, existingData = [], bookName) {
     // טען את כל התמונות של הספר
     let thumbnails = []
     if (USE_BLOB) {
+        console.log(`📸 Loading thumbnails for book: "${bookName}"`)
         const blobs = await listFiles(`thumbnails/${bookName}/`)
-        thumbnails = blobs.map(blob => ({
-            name: blob.pathname.split('/').pop(),
-            url: blob.url
-        }))
+        console.log(`   Found ${blobs.length} blobs`)
+        thumbnails = blobs.map(blob => {
+            const fileName = blob.pathname.split('/').pop()
+            console.log(`   - ${fileName} -> ${blob.url}`)
+            return {
+                name: fileName,
+                url: blob.url
+            }
+        })
     }
 
     for (let i = 1; i <= numPages; i++) {
@@ -243,6 +249,9 @@ async function createPagesData(numPages, existingData = [], bookName) {
         let thumbnail = null
         if (USE_BLOB) {
             thumbnail = findPageThumbnailFromBlobs(thumbnails, i, bookName)
+            if (!thumbnail) {
+                console.warn(`⚠️  No thumbnail found for page ${i}`)
+            }
         } else {
             const thumbnailsPath = path.join(THUMBNAILS_PATH, bookName)
             thumbnail = findPageThumbnail(thumbnailsPath, i, bookName)
@@ -267,24 +276,42 @@ async function createPagesData(numPages, existingData = [], bookName) {
         }
     }
 
+    console.log(`✅ Created ${pagesData.length} pages, ${pagesData.filter(p => p.thumbnail).length} with thumbnails`)
     return pagesData
 }
 
 // מציאת תמונת עמוד מרשימת blobs
 function findPageThumbnailFromBlobs(thumbnails, pageNumber, bookName) {
+    // נסה פורמטים שונים של שמות קבצים
     const possibleNames = [
         `page-${pageNumber}.jpg`,
         `page-${pageNumber}.jpeg`,
         `page-${pageNumber}.png`,
         `page_${pageNumber}.jpg`,
         `${pageNumber}.jpg`,
+        `${String(pageNumber).padStart(3, '0')}.jpg`, // 001.jpg
+        `page-${String(pageNumber).padStart(3, '0')}.jpg`, // page-001.jpg
     ]
 
     for (const name of possibleNames) {
         const found = thumbnails.find(t => t.name === name)
         if (found) {
+            console.log(`   ✅ Found thumbnail for page ${pageNumber}: ${name}`)
             return found.url
         }
+    }
+
+    // אם לא נמצא, נסה חיפוש גמיש יותר
+    const flexibleMatch = thumbnails.find(t => {
+        const fileName = t.name.toLowerCase()
+        return fileName.includes(`${pageNumber}.`) || 
+               fileName.includes(`-${pageNumber}.`) ||
+               fileName.includes(`_${pageNumber}.`)
+    })
+    
+    if (flexibleMatch) {
+        console.log(`   ✅ Found thumbnail (flexible) for page ${pageNumber}: ${flexibleMatch.name}`)
+        return flexibleMatch.url
     }
 
     return null
@@ -316,10 +343,23 @@ async function getPageCountFromThumbnails(bookName) {
         // ספור תמונות מ-Blob Storage
         try {
             console.log(`📊 Counting thumbnails from Blob for: "${bookName}"`)
+            console.log(`   Book name length: ${bookName.length}`)
+            console.log(`   Book name charCodes:`, Array.from(bookName).map(c => c.charCodeAt(0)))
+            
             const prefix = `thumbnails/${bookName}/`
-            console.log(`   Searching with prefix: "${prefix}"`)
+            console.log(`   Full prefix: "${prefix}"`)
+            
             const blobs = await listFiles(prefix)
             console.log(`   Found ${blobs.length} blobs`)
+            
+            if (blobs.length === 0) {
+                // נסה ללא / בסוף
+                console.log(`   Trying without trailing slash...`)
+                const blobs2 = await listFiles(`thumbnails/${bookName}`)
+                console.log(`   Found ${blobs2.length} blobs without slash`)
+                return blobs2.length || null
+            }
+            
             if (blobs.length > 0) {
                 console.log(`   First blob: ${blobs[0].pathname}`)
             }

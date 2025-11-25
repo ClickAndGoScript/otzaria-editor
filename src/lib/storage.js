@@ -3,33 +3,88 @@ import { put, del, list, head } from '@vercel/blob'
 // כרגע כל הנתונים ב-dev/ כולל production
 const BLOB_PREFIX = 'dev/'
 
-// שמירת קובץ JSON
+// שמירת קובץ JSON עם גיבוי אוטומטי
 export async function saveJSON(path, data) {
   try {
-    const blob = await put(BLOB_PREFIX + path, JSON.stringify(data, null, 2), {
+    const jsonString = JSON.stringify(data, null, 2)
+    
+    // שמור את הקובץ הראשי
+    const blob = await put(BLOB_PREFIX + path, jsonString, {
       access: 'public',
       contentType: 'application/json',
       addRandomSuffix: false,
       allowOverwrite: true
     })
+    
+    // שמור גיבוי עם חותמת זמן (רק לקבצי pages)
+    if (path.includes('data/pages/')) {
+      try {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+        const backupPath = path.replace('.json', `_backup_${timestamp}.json`)
+        await put(BLOB_PREFIX + backupPath, jsonString, {
+          access: 'public',
+          contentType: 'application/json',
+          addRandomSuffix: false,
+          allowOverwrite: true
+        })
+        console.log(`✅ Backup saved: ${backupPath}`)
+      } catch (backupError) {
+        console.warn('⚠️  Failed to save backup:', backupError)
+        // לא נזרוק שגיאה כי הקובץ הראשי נשמר
+      }
+    }
+    
     return blob
   } catch (error) {
-    console.error('Error saving JSON:', error)
+    console.error('❌ Error saving JSON:', error)
     throw error
   }
 }
 
-// קריאת קובץ JSON
+// קריאת קובץ JSON עם התאוששות אוטומטית מגיבוי
 export async function readJSON(path) {
   try {
+    // נסה לקרוא את הקובץ הראשי
     const blobs = await list({ prefix: BLOB_PREFIX + path, limit: 1 })
-    if (blobs.blobs.length === 0) return null
     
-    const response = await fetch(blobs.blobs[0].url)
-    if (!response.ok) return null
-    return await response.json()
+    if (blobs.blobs.length > 0) {
+      const response = await fetch(blobs.blobs[0].url)
+      if (response.ok) {
+        const data = await response.json()
+        console.log(`✅ Loaded JSON from: ${path}`)
+        return data
+      }
+    }
+    
+    // אם הקובץ הראשי לא נמצא, נסה למצוא גיבוי
+    if (path.includes('data/pages/')) {
+      console.warn(`⚠️  Main file not found: ${path}, searching for backup...`)
+      const backupPath = path.replace('.json', '_backup_')
+      const backupBlobs = await list({ prefix: BLOB_PREFIX + backupPath })
+      
+      if (backupBlobs.blobs.length > 0) {
+        // מיין לפי תאריך (הכי חדש קודם)
+        const sortedBackups = backupBlobs.blobs.sort((a, b) => 
+          new Date(b.uploadedAt) - new Date(a.uploadedAt)
+        )
+        
+        console.log(`📦 Found ${sortedBackups.length} backups, using latest`)
+        const response = await fetch(sortedBackups[0].url)
+        if (response.ok) {
+          const data = await response.json()
+          console.log(`✅ Restored from backup: ${sortedBackups[0].pathname}`)
+          
+          // שחזר את הקובץ הראשי
+          await saveJSON(path, data)
+          return data
+        }
+      }
+    }
+    
+    console.warn(`❌ No file or backup found for: ${path}`)
+    return null
   } catch (error) {
-    console.error('Error reading JSON:', error)
+    console.error('❌ Error reading JSON:', error)
     return null
   }
 }
