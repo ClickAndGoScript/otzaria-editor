@@ -7,6 +7,8 @@ export async function POST(request) {
         const { bookPath, pageNumber, userId, userName } = body
 
         console.log('📤 Claim page request:', { bookPath, pageNumber, userId, userName })
+        console.log('   Book path length:', bookPath?.length)
+        console.log('   Book path char codes:', bookPath ? Array.from(bookPath).map(c => c.charCodeAt(0)) : 'N/A')
 
         if (!bookPath || !pageNumber || !userId || !userName) {
             return NextResponse.json(

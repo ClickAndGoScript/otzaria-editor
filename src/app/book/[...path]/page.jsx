@@ -30,7 +30,10 @@ export default function BookPage() {
   const { data: session } = useSession()
   const router = useRouter()
   const params = useParams()
+  // Next.js מפענח את params.path אוטומטית, אז לא צריך decodeURIComponent
   const bookPath = Array.isArray(params.path) ? params.path.join('/') : params.path
+  
+  console.log('📖 BookPage loaded with path:', bookPath)
   
   const [bookData, setBookData] = useState(null)
   const [pages, setPages] = useState([])
@@ -45,7 +48,10 @@ export default function BookPage() {
   const loadBookData = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/book/${bookPath}`)
+      // קודד את bookPath ל-URL (כי הוא כבר מפוענח מ-params)
+      const encodedPath = encodeURIComponent(bookPath)
+      console.log('📤 Loading book:', { bookPath, encodedPath })
+      const response = await fetch(`/api/book/${encodedPath}`)
       const result = await response.json()
       
       if (result.success) {
@@ -82,15 +88,14 @@ export default function BookPage() {
         setConfirmDialog(null)
         
         try {
-          // שלח בקשה לשרת - bookPath כבר מקודד מה-URL
-          const decodedPath = decodeURIComponent(bookPath)
-          console.log('📤 Claiming page:', { bookPath, decodedPath, pageNumber })
+          // bookPath כבר מפוענח מ-params, אז נשתמש בו ישירות
+          console.log('📤 Claiming page:', { bookPath, pageNumber })
           
           const response = await fetch(`/api/book/claim-page`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              bookPath: decodedPath,
+              bookPath: bookPath,
               pageNumber,
               userId: session.user.id,
               userName: session.user.name
@@ -125,15 +130,14 @@ export default function BookPage() {
     if (!session) return
 
     try {
-      // שלח בקשה לשרת - bookPath כבר מקודד מה-URL
-      const decodedPath = decodeURIComponent(bookPath)
-      console.log('✅ Completing page:', { bookPath, decodedPath, pageNumber })
+      // bookPath כבר מפוענח מ-params, אז נשתמש בו ישירות
+      console.log('✅ Completing page:', { bookPath, pageNumber })
       
       const response = await fetch(`/api/book/complete-page`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          bookPath: decodedPath,
+          bookPath: bookPath,
           pageNumber,
           userId: session.user.id
         })

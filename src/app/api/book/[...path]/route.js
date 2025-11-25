@@ -162,13 +162,17 @@ async function handleCompletePage(bookPath, pageNumber, userId) {
 
 export async function GET(request, { params }) {
     try {
-        console.log('API called with params:', params)
+        console.log('📥 API called with params:', params)
+        
+        // Next.js כבר מפענח את ה-URL params אוטומטית
         const bookPath = Array.isArray(params.path) ? params.path.join('/') : params.path
-        console.log('Book path:', bookPath)
-        const decodedPath = decodeURIComponent(bookPath)
-        console.log('Decoded path:', decodedPath)
-
-        const bookName = decodedPath // שם הספר הוא שם התיקייה
+        console.log('   Book path (from params):', bookPath)
+        console.log('   Book path length:', bookPath.length)
+        console.log('   Book path char codes:', Array.from(bookPath).map(c => c.charCodeAt(0)))
+        
+        // אם זה כבר מפוענח, אל תפענח שוב
+        // אחרת זה יכול לגרום לבעיות עם תווים מיוחדים
+        const bookName = bookPath
 
         // קרא את מספר העמודים מספירת התמונות
         let numPages = await getPageCountFromThumbnails(bookName)
@@ -201,7 +205,7 @@ export async function GET(request, { params }) {
             success: true,
             book: {
                 name: bookName,
-                path: decodedPath,
+                path: bookPath,
                 totalPages: numPages,
             },
             pages: pagesData,
