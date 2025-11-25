@@ -180,11 +180,30 @@ export async function GET(request, { params }) {
         const bookName = bookPath
 
         // קרא את מספר העמודים מספירת התמונות
-        let numPages = await getPageCountFromThumbnails(bookName)
+        let numPages
+        try {
+            numPages = await getPageCountFromThumbnails(bookName)
+        } catch (countError) {
+            console.error('❌ Failed to count pages:', countError)
+            return NextResponse.json(
+                { 
+                    success: false, 
+                    error: 'שגיאה בספירת עמודי הספר',
+                    details: countError.message,
+                    bookName: bookName
+                },
+                { status: 500 }
+            )
+        }
         
         if (!numPages || numPages === 0) {
             return NextResponse.json(
-                { success: false, error: 'לא נמצאו תמונות עבור ספר זה' },
+                { 
+                    success: false, 
+                    error: 'לא נמצאו תמונות עבור ספר זה',
+                    bookName: bookName,
+                    useBlob: USE_BLOB
+                },
                 { status: 404 }
             )
         }
@@ -348,6 +367,12 @@ function findPageThumbnail(thumbnailsPath, pageNumber, bookName) {
 
 // קריאת מספר עמודים מספירת תמונות
 async function getPageCountFromThumbnails(bookName) {
+    console.log(`📊 getPageCountFromThumbnails called`)
+    console.log(`   USE_BLOB: ${USE_BLOB}`)
+    console.log(`   VERCEL_ENV: ${process.env.VERCEL_ENV}`)
+    console.log(`   USE_BLOB_STORAGE: ${process.env.USE_BLOB_STORAGE}`)
+    console.log(`   Has BLOB_TOKEN: ${!!process.env.BLOB_READ_WRITE_TOKEN}`)
+    
     if (USE_BLOB) {
         // ספור תמונות מ-Blob Storage
         try {
@@ -375,7 +400,9 @@ async function getPageCountFromThumbnails(bookName) {
             return blobs.length || null
         } catch (error) {
             console.error('❌ Error counting thumbnails from Blob:', error)
-            return null
+            console.error('   Error details:', error.message)
+            console.error('   Error stack:', error.stack)
+            throw error // זרוק את השגיאה כדי שנראה אותה
         }
     } else {
         // ספור תמונות מקומיות
