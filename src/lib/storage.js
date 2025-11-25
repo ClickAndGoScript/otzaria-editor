@@ -24,7 +24,7 @@ export async function readJSON(path) {
     if (blobs.blobs.length === 0) return null
     
     const response = await fetch(blobs.blobs[0].url)
-    if (response.ok) return null
+    if (!response.ok) return null
     return await response.json()
   } catch (error) {
     console.error('Error reading JSON:', error)
@@ -54,7 +54,7 @@ export async function readText(path) {
     if (blobs.blobs.length === 0) return null
     
     const response = await fetch(blobs.blobs[0].url)
-    if (response.ok) return null
+    if (!response.ok) return null
     return await response.text()
   } catch (error) {
     console.error('Error reading text:', error)
