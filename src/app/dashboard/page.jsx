@@ -13,6 +13,7 @@ export default function DashboardPage() {
     myPages: 0,
     completedPages: 0,
     inProgressPages: 0,
+    points: 0,
     recentActivity: []
   })
   const [loading, setLoading] = useState(true)
@@ -32,7 +33,13 @@ export default function DashboardPage() {
       const result = await response.json()
       
       if (result.success) {
-        setStats(result.stats)
+        setStats({
+          myPages: result.stats?.myPages || 0,
+          completedPages: result.stats?.completedPages || 0,
+          inProgressPages: result.stats?.inProgressPages || 0,
+          points: result.stats?.points || 0,
+          recentActivity: result.recentActivity || []
+        })
       }
     } catch (error) {
       console.error('Error loading stats:', error)
@@ -174,7 +181,7 @@ export default function DashboardPage() {
                   progress_activity
                 </span>
               </div>
-            ) : stats.recentActivity.length > 0 ? (
+            ) : stats.recentActivity && stats.recentActivity.length > 0 ? (
               <div className="space-y-4">
                 {stats.recentActivity.map((activity) => (
                   <div key={`${activity.bookName}-${activity.pageNumber}`} className="flex items-center gap-4 p-4 bg-surface rounded-lg">
