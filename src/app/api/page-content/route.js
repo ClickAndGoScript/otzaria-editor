@@ -13,8 +13,8 @@ export async function POST(request) {
       )
     }
 
-    // צור שם קובץ בטוח
-    const bookName = path.basename(bookPath, '.pdf').replace(/[^a-zA-Z0-9א-ת]/g, '_')
+    // צור שם קובץ בטוח - bookPath הוא כבר שם התיקייה
+    const bookName = bookPath.replace(/[^a-zA-Z0-9א-ת]/g, '_')
     const fileName = `data/content/${bookName}_page_${pageNumber}.txt`
 
     // בנה את התוכן לשמירה
@@ -58,7 +58,7 @@ export async function GET(request) {
       )
     }
 
-    const bookName = path.basename(bookPath, '.pdf').replace(/[^a-zA-Z0-9א-ת]/g, '_')
+    const bookName = bookPath.replace(/[^a-zA-Z0-9א-ת]/g, '_')
     const fileName = `data/content/${bookName}_page_${pageNumber}.txt`
 
     const textContent = await readText(fileName)

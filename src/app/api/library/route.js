@@ -3,7 +3,7 @@ import { loadLibraryStructure } from '@/lib/library-loader'
 
 export async function GET() {
   try {
-    const structure = loadLibraryStructure()
+    const structure = await loadLibraryStructure()
     
     return NextResponse.json({
       success: true,

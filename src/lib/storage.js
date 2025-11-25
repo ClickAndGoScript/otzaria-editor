@@ -93,3 +93,31 @@ export async function fileExists(path) {
     return false
   }
 }
+
+// שמירת תמונה
+export async function saveImage(path, imageBuffer, contentType = 'image/jpeg') {
+  try {
+    const blob = await put(BLOB_PREFIX + path, imageBuffer, {
+      access: 'public',
+      contentType: contentType,
+      addRandomSuffix: false,
+      allowOverwrite: true
+    })
+    return blob
+  } catch (error) {
+    console.error('Error saving image:', error)
+    throw error
+  }
+}
+
+// קריאת URL של תמונה
+export async function getImageUrl(path) {
+  try {
+    const blobs = await list({ prefix: BLOB_PREFIX + path, limit: 1 })
+    if (blobs.blobs.length === 0) return null
+    return blobs.blobs[0].url
+  } catch (error) {
+    console.error('Error getting image URL:', error)
+    return null
+  }
+}

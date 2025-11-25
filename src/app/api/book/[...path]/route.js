@@ -3,7 +3,7 @@ import { saveJSON, readJSON } from '@/lib/storage'
 import path from 'path'
 import fs from 'fs'
 
-const LIBRARY_PATH = path.join(process.cwd(), 'public', 'assets', 'library')
+const THUMBNAILS_PATH = path.join(process.cwd(), 'public', 'thumbnails')
 
 export async function POST(request, { params }) {
     try {
@@ -40,7 +40,7 @@ async function handleClaimPage(bookPath, pageNumber, userId, userName) {
             )
         }
 
-        const bookName = path.basename(bookPath, '.pdf')
+        const bookName = bookPath // שם הספר הוא שם התיקייה
         const pagesDataFile = `data/pages/${bookName}.json`
 
         const pagesData = await readJSON(pagesDataFile)
@@ -105,7 +105,7 @@ async function handleCompletePage(bookPath, pageNumber, userId) {
             )
         }
 
-        const bookName = path.basename(bookPath, '.pdf')
+        const bookName = bookPath // שם הספר הוא שם התיקייה
         const pagesDataFile = `data/pages/${bookName}.json`
 
         const pagesData = await readJSON(pagesDataFile)
@@ -167,10 +167,18 @@ export async function GET(request, { params }) {
         const decodedPath = decodeURIComponent(bookPath)
         console.log('Decoded path:', decodedPath)
 
-        const bookName = path.basename(decodedPath, '.pdf')
+        const bookName = decodedPath // שם הספר הוא שם התיקייה
 
-        // קרא את מספר העמודים ממטא-דאטה או מספר התמונות
-        let numPages = await getPageCountFromMeta(bookName) || await getPageCountFromThumbnails(bookName) || 10
+        // קרא את מספר העמודים מספירת התמונות
+        let numPages = await getPageCountFromThumbnails(bookName)
+        
+        if (!numPages || numPages === 0) {
+            return NextResponse.json(
+                { success: false, error: 'לא נמצאו תמונות עבור ספר זה' },
+                { status: 404 }
+            )
+        }
+        
         console.log(`Book "${bookName}" has ${numPages} pages`)
 
         // טען נתוני עמודים מ-Blob Storage
@@ -212,30 +220,17 @@ export async function GET(request, { params }) {
     }
 }
 
-// יצירת נתוני עמודים
-function createPagesData(numPages, existingData = [], bookPath) {
+// יצירת נתוני עמודים מתיקיית התמונות
+function createPagesData(numPages, existingData = [], bookName) {
     const pagesData = []
-
-    // נסה לטעון תמונות thumbnail אם קיימות
-    const bookNameWithoutExt = bookPath.replace('.pdf', '')
-    const thumbnailsPath = path.join(process.cwd(), 'public', 'thumbnails', bookNameWithoutExt)
-    const hasThumbnails = fs.existsSync(thumbnailsPath)
-
-    let thumbnailCount = 0
+    const thumbnailsPath = path.join(THUMBNAILS_PATH, bookName)
 
     for (let i = 1; i <= numPages; i++) {
         // אם יש נתונים קיימים לעמוד זה, שמור אותם
         const existingPage = existingData.find(p => p.number === i)
 
-        // בדוק אם יש תמונת thumbnail
-        let thumbnail = null
-        if (hasThumbnails) {
-            const thumbPath = path.join(thumbnailsPath, `page-${i}.jpg`)
-            if (fs.existsSync(thumbPath)) {
-                thumbnail = `/thumbnails/${bookNameWithoutExt}/page-${i}.jpg`
-                thumbnailCount++
-            }
-        }
+        // מצא את תמונת העמוד
+        let thumbnail = findPageThumbnail(thumbnailsPath, i, bookName)
 
         // הוסף את העמוד לרשימה
         if (existingPage) {
@@ -259,18 +254,20 @@ function createPagesData(numPages, existingData = [], bookPath) {
     return pagesData
 }
 
-// קריאת מספר עמודים ממטא-דאטה
-async function getPageCountFromMeta(bookName) {
-    const metaPath = path.join(process.cwd(), 'public', 'assets', 'library', `${bookName}.pdf.meta.json`)
+// מציאת תמונת עמוד - תומך בפורמטים שונים
+function findPageThumbnail(thumbnailsPath, pageNumber, bookName) {
+    const possibleNames = [
+        `page-${pageNumber}.jpg`,
+        `page-${pageNumber}.jpeg`,
+        `page-${pageNumber}.png`,
+        `page_${pageNumber}.jpg`,
+        `${pageNumber}.jpg`,
+    ]
 
-    if (fs.existsSync(metaPath)) {
-        try {
-            const meta = fs.readFileSync(metaPath, 'utf-8')
-            const parsed = JSON.parse(meta)
-            console.log(`Found meta file for ${bookName}: ${parsed.pages} pages`)
-            return parsed.pages || null
-        } catch (error) {
-            console.error('Error reading meta file:', error)
+    for (const name of possibleNames) {
+        const fullPath = path.join(thumbnailsPath, name)
+        if (fs.existsSync(fullPath)) {
+            return `/thumbnails/${bookName}/${name}`
         }
     }
 
@@ -279,12 +276,15 @@ async function getPageCountFromMeta(bookName) {
 
 // קריאת מספר עמודים מספירת תמונות
 async function getPageCountFromThumbnails(bookName) {
-    const thumbnailsPath = path.join(process.cwd(), 'public', 'thumbnails', bookName)
+    const thumbnailsPath = path.join(THUMBNAILS_PATH, bookName)
 
     if (fs.existsSync(thumbnailsPath)) {
         try {
             const files = fs.readdirSync(thumbnailsPath)
-            const imageFiles = files.filter(f => f.endsWith('.jpg') || f.endsWith('.png'))
+            const imageFiles = files.filter(f => {
+                const ext = path.extname(f).toLowerCase()
+                return ['.jpg', '.jpeg', '.png', '.webp'].includes(ext)
+            })
             console.log(`Found ${imageFiles.length} thumbnail images for ${bookName}`)
             return imageFiles.length || null
         } catch (error) {
@@ -292,5 +292,6 @@ async function getPageCountFromThumbnails(bookName) {
         }
     }
 
+    console.warn(`Thumbnails directory not found: ${thumbnailsPath}`)
     return null
 }

@@ -12,7 +12,9 @@
     "data:stats": "node scripts/data-management.js stats",
     "data:list": "node scripts/data-management.js list-books",
     "data:export": "node scripts/data-management.js export-progress",
-    "data:help": "node scripts/data-management.js help"
+    "data:help": "node scripts/data-management.js help",
+    "thumbnails:check": "node scripts/check-thumbnails.js",
+    "thumbnails:upload": "node scripts/upload-thumbnails-to-blob.js"
   },
   "dependencies": {
     "@vercel/blob": "^2.0.0",

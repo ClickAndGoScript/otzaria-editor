@@ -1,20 +1,28 @@
 import fs from 'fs'
 import path from 'path'
+import { listFiles } from './storage.js'
 
-// נתיב לתיקיית הספרייה
-const LIBRARY_PATH = path.join(process.cwd(), 'public', 'assets', 'library')
+// נתיב לתיקיית התמונות המקומית
+const THUMBNAILS_PATH = path.join(process.cwd(), 'public', 'thumbnails')
+
+// האם להשתמש ב-Blob Storage או בקבצים מקומיים
+const USE_BLOB = process.env.USE_BLOB_STORAGE === 'true' || process.env.VERCEL_ENV === 'production'
 
 /**
- * קריאת מבנה התיקיות והקבצים מתיקיית הספרייה
+ * קריאת מבנה הספרייה מתיקיית התמונות
+ * כל תיקייה = ספר, כל תמונה = עמוד
  */
-export function loadLibraryStructure() {
+export async function loadLibraryStructure() {
   try {
-    if (!fs.existsSync(LIBRARY_PATH)) {
-      console.warn('Library directory does not exist:', LIBRARY_PATH)
-      return []
+    if (USE_BLOB) {
+      return await scanBlobThumbnails()
+    } else {
+      if (!fs.existsSync(THUMBNAILS_PATH)) {
+        console.warn('Thumbnails directory does not exist:', THUMBNAILS_PATH)
+        return []
+      }
+      return scanThumbnailsDirectory()
     }
-
-    return scanDirectory(LIBRARY_PATH, '')
   } catch (error) {
     console.error('Error loading library structure:', error)
     return []
@@ -22,128 +30,194 @@ export function loadLibraryStructure() {
 }
 
 /**
- * סריקת תיקייה רקורסיבית
+ * סריקת תמונות מ-Blob Storage
  */
-function scanDirectory(dirPath, relativePath) {
-  const items = []
+async function scanBlobThumbnails() {
+  try {
+    const blobs = await listFiles('thumbnails/')
+    const books = new Map()
+
+    for (const blob of blobs) {
+      // נתיב לדוגמה: thumbnails/חוות דעת/page-1.jpg
+      const pathParts = blob.pathname.split('/')
+      if (pathParts.length < 3) continue
+
+      const bookName = pathParts[1]
+      
+      if (!books.has(bookName)) {
+        books.set(bookName, {
+          id: bookName,
+          name: bookName,
+          type: 'file',
+          status: 'available',
+          lastEdit: blob.uploadedAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+          editor: null,
+          path: bookName,
+          pageCount: 0,
+          thumbnailsPath: `/thumbnails/${bookName}`,
+        })
+      }
+
+      books.get(bookName).pageCount++
+    }
+
+    return Array.from(books.values())
+  } catch (error) {
+    console.error('Error scanning blob thumbnails:', error)
+    return []
+  }
+}
+
+/**
+ * סריקת תיקיית התמונות
+ * כל תיקייה = ספר
+ */
+function scanThumbnailsDirectory() {
+  const books = []
   
   try {
-    const entries = fs.readdirSync(dirPath, { withFileTypes: true })
+    const entries = fs.readdirSync(THUMBNAILS_PATH, { withFileTypes: true })
     
-    entries.forEach((entry, index) => {
+    entries.forEach((entry) => {
       // דלג על קבצים מוסתרים
       if (entry.name.startsWith('.')) return
       
-      const fullPath = path.join(dirPath, entry.name)
-      const itemRelativePath = path.join(relativePath, entry.name)
-      const stats = fs.statSync(fullPath)
-      
       if (entry.isDirectory()) {
-        // תיקייה
-        const children = scanDirectory(fullPath, itemRelativePath)
-        items.push({
-          id: itemRelativePath.replace(/\\/g, '/'),
-          name: entry.name,
-          type: 'folder',
-          children: children,
-          path: itemRelativePath.replace(/\\/g, '/'),
-        })
-      } else if (entry.isFile()) {
-        // קובץ - רק קבצי PDF
-        const ext = path.extname(entry.name).toLowerCase()
-        if (ext === '.pdf') {
-          items.push({
-            id: itemRelativePath.replace(/\\/g, '/'),
-            name: entry.name.replace(ext, ''), // הסר סיומת .pdf
-            type: 'file',
-            status: determineStatus(fullPath, stats),
-            lastEdit: stats.mtime.toISOString().split('T')[0],
-            editor: null, // ניתן להוסיף מטא-דאטה
-            path: itemRelativePath.replace(/\\/g, '/'),
-            size: stats.size,
-            fileUrl: `/assets/library/${itemRelativePath.replace(/\\/g, '/')}`,
-          })
+        const bookPath = path.join(THUMBNAILS_PATH, entry.name)
+        const bookData = scanBookDirectory(entry.name, bookPath)
+        
+        if (bookData) {
+          books.push(bookData)
         }
       }
     })
   } catch (error) {
-    console.error('Error scanning directory:', dirPath, error)
+    console.error('Error scanning thumbnails directory:', error)
   }
   
-  return items
+  return books
 }
 
 /**
- * קביעת סטטוס קובץ לפי מטא-דאטה או גודל
+ * סריקת תיקיית ספר ספציפי
  */
-function determineStatus(filePath, stats) {
-  // ניתן לקרוא מקובץ מטא-דאטה או לקבוע לפי כללים
-  const metaPath = filePath + '.meta.json'
-  
-  if (fs.existsSync(metaPath)) {
-    try {
-      const meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'))
-      return meta.status || 'available'
-    } catch (error) {
-      console.error('Error reading meta file:', metaPath, error)
-    }
-  }
-  
-  // ברירת מחדל לקבצי PDF - קובץ גדול = הושלם
-  // PDF בדרך כלל גדול מ-100KB
-  if (stats.size > 1000000) { // 1MB
-    return 'completed'
-  } else if (stats.size > 100000) { // 100KB
-    return 'in-progress'
-  }
-  
-  return 'available'
-}
-
-/**
- * חיפוש בעץ
- */
-export function searchInTree(tree, searchTerm) {
-  if (!searchTerm) return tree
-  
-  const results = []
-  const lowerSearch = searchTerm.toLowerCase()
-  
-  function search(items, path = []) {
-    items.forEach(item => {
-      const currentPath = [...path, item.name]
-      
-      if (item.name.toLowerCase().includes(lowerSearch)) {
-        results.push({ ...item, path: currentPath })
-      }
-      
-      if (item.children) {
-        search(item.children, currentPath)
-      }
+function scanBookDirectory(bookName, bookPath) {
+  try {
+    const files = fs.readdirSync(bookPath)
+    
+    // סנן רק קבצי תמונות
+    const imageFiles = files.filter(file => {
+      const ext = path.extname(file).toLowerCase()
+      return ['.jpg', '.jpeg', '.png', '.webp'].includes(ext)
     })
+    
+    if (imageFiles.length === 0) {
+      console.warn(`No images found in book: ${bookName}`)
+      return null
+    }
+    
+    // ספור עמודים
+    const pageCount = imageFiles.length
+    
+    // קרא מטא-דאטה אם קיימת
+    const stats = fs.statSync(bookPath)
+    
+    return {
+      id: bookName,
+      name: bookName,
+      type: 'file',
+      status: 'available', // ברירת מחדל
+      lastEdit: stats.mtime.toISOString().split('T')[0],
+      editor: null,
+      path: bookName,
+      pageCount: pageCount,
+      thumbnailsPath: `/thumbnails/${bookName}`,
+    }
+  } catch (error) {
+    console.error('Error scanning book directory:', bookName, error)
+    return null
   }
-  
-  search(tree)
-  return results
 }
 
 /**
- * ספירת קבצים לפי סטטוס
+ * חיפוש ספרים
  */
-export function countByStatus(tree) {
+export function searchInTree(books, searchTerm) {
+  if (!searchTerm) return books
+  
+  const lowerSearch = searchTerm.toLowerCase()
+  return books.filter(book => 
+    book.name.toLowerCase().includes(lowerSearch)
+  )
+}
+
+/**
+ * ספירת ספרים לפי סטטוס
+ */
+export function countByStatus(books) {
   const counts = { completed: 0, 'in-progress': 0, available: 0 }
   
-  function count(items) {
-    items.forEach(item => {
-      if (item.type === 'file' && item.status) {
-        counts[item.status]++
-      }
-      if (item.children) {
-        count(item.children)
-      }
-    })
-  }
+  books.forEach(book => {
+    if (book.status) {
+      counts[book.status]++
+    }
+  })
   
-  count(tree)
   return counts
+}
+
+/**
+ * קבלת מספר עמודים של ספר
+ */
+export function getBookPageCount(bookName) {
+  try {
+    const bookPath = path.join(THUMBNAILS_PATH, bookName)
+    
+    if (!fs.existsSync(bookPath)) {
+      return 0
+    }
+    
+    const files = fs.readdirSync(bookPath)
+    const imageFiles = files.filter(file => {
+      const ext = path.extname(file).toLowerCase()
+      return ['.jpg', '.jpeg', '.png', '.webp'].includes(ext)
+    })
+    
+    return imageFiles.length
+  } catch (error) {
+    console.error('Error getting page count:', error)
+    return 0
+  }
+}
+
+/**
+ * בדיקה אם תמונת עמוד קיימת
+ */
+export function pageImageExists(bookName, pageNumber) {
+  try {
+    const bookPath = path.join(THUMBNAILS_PATH, bookName)
+    
+    if (!fs.existsSync(bookPath)) {
+      return false
+    }
+    
+    // נסה מספר פורמטים אפשריים
+    const possibleNames = [
+      `page-${pageNumber}.jpg`,
+      `page-${pageNumber}.jpeg`,
+      `page-${pageNumber}.png`,
+      `page_${pageNumber}.jpg`,
+      `${pageNumber}.jpg`,
+    ]
+    
+    for (const name of possibleNames) {
+      if (fs.existsSync(path.join(bookPath, name))) {
+        return true
+      }
+    }
+    
+    return false
+  } catch (error) {
+    return false
+  }
 }
