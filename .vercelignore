@@ -1,0 +1,11 @@
+# קבצים כבדים שלא צריכים בפריסה
+data/
+public/thumbnails/
+scripts/*.pdf
+*.zip
+*.rar
+
+# קבצי פיתוח
+.vscode/
+.next/
+node_modules/

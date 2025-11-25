@@ -1,0 +1,14 @@
+# חבילות Python נדרשות להמרת PDF לתמונות
+
+# אפשרות 1: PyMuPDF (מומלץ - לא דורש תלויות חיצוניות!)
+PyMuPDF>=1.23.0
+Pillow>=10.0.0
+
+# אפשרות 2: pdf2image (דורש Poppler מותקן במערכת)
+# pdf2image>=1.16.0
+# Pillow>=10.0.0
+#
+# אם תבחר ב-pdf2image, תצטרך להתקין Poppler:
+# Windows: https://github.com/oschwartz10612/poppler-windows/releases/
+# Linux: sudo apt-get install poppler-utils
+# Mac: brew install poppler
