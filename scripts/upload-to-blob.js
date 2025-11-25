@@ -40,7 +40,8 @@ async function uploadDirectory(dir, prefix = '') {
       try {
         await put(blobPath, content, {
           access: 'public',
-          addRandomSuffix: false
+          addRandomSuffix: false,
+          allowOverwrite: true
         })
         uploadCount++
         console.log(`✅ ${uploadCount}. Uploaded: ${prefix}${file}`)

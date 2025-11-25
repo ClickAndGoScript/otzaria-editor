@@ -173,20 +173,18 @@ export async function GET(request, { params }) {
         let numPages = await getPageCountFromMeta(bookName) || await getPageCountFromThumbnails(bookName) || 10
         console.log(`Book "${bookName}" has ${numPages} pages`)
 
-        // טען או צור נתוני עמודים
+        // טען נתוני עמודים מ-Blob Storage
         const pagesDataFile = `data/pages/${bookName}.json`
         let pagesData = await readJSON(pagesDataFile)
 
-        if (pagesData) {
-            // אם מספר העמודים השתנה, עדכן
-            if (pagesData.length !== numPages) {
-                console.log(`Updating pages count from ${pagesData.length} to ${numPages}`)
-                pagesData = createPagesData(numPages, pagesData, decodedPath)
-                await saveJSON(pagesDataFile, pagesData)
-            }
-        } else {
-            // צור נתוני עמודים חדשים
+        if (!pagesData) {
+            // אם אין קובץ, צור נתונים חדשים
             pagesData = createPagesData(numPages, [], decodedPath)
+            await saveJSON(pagesDataFile, pagesData)
+        } else if (pagesData.length !== numPages) {
+            // אם מספר העמודים השתנה, עדכן
+            console.log(`Updating pages count from ${pagesData.length} to ${numPages}`)
+            pagesData = createPagesData(numPages, pagesData, decodedPath)
             await saveJSON(pagesDataFile, pagesData)
         }
 
