@@ -4,8 +4,8 @@ import { listImages } from '@/lib/github-storage'
 import path from 'path'
 import fs from 'fs'
 
-const USE_BLOB = process.env.USE_BLOB_STORAGE === 'true' || process.env.VERCEL_ENV === 'production'
 const USE_GITHUB = process.env.USE_GITHUB_STORAGE === 'true' || process.env.VERCEL_ENV === 'production'
+const USE_BLOB = !USE_GITHUB && (process.env.USE_BLOB_STORAGE === 'true')
 const THUMBNAILS_PATH = path.join(process.cwd(), 'public', 'thumbnails')
 
 export const runtime = 'nodejs'
@@ -101,17 +101,24 @@ async function createPagesData(numPages, existingData = [], bookName) {
     let thumbnails = []
     let bookId = null
     
+    console.log(`🔍 createPagesData: USE_GITHUB=${USE_GITHUB}, USE_BLOB=${USE_BLOB}`)
+    
     if (USE_GITHUB) {
+        console.log('📸 Using GitHub Storage for thumbnails')
         // טען מיפוי ספרים
         const mapping = await readJSON('data/book-mapping.json')
+        console.log('📋 Mapping:', mapping)
         bookId = Object.entries(mapping || {}).find(([id, name]) => name === bookName)?.[0]
+        console.log(`📚 Book ID for "${bookName}": ${bookId}`)
         
         if (bookId) {
             const images = await listImages(bookId)
+            console.log(`📸 Found ${images.length} images from GitHub`)
             thumbnails = images.map(img => ({
                 name: img.pathname.replace(`${bookId}_`, ''),
                 url: img.url
             }))
+            console.log(`📸 Sample thumbnail:`, thumbnails[0])
         }
     } else if (USE_BLOB) {
         const { listFiles } = await import('@/lib/storage')
@@ -128,11 +135,14 @@ async function createPagesData(numPages, existingData = [], bookName) {
         
         if (USE_GITHUB && bookId) {
             thumbnail = findPageThumbnailFromBlobs(thumbnails, i, bookName)
+            if (i === 1) console.log(`📸 Page 1 thumbnail (GitHub):`, thumbnail)
         } else if (USE_BLOB) {
             thumbnail = findPageThumbnailFromBlobs(thumbnails, i, bookName)
+            if (i === 1) console.log(`📸 Page 1 thumbnail (Blob):`, thumbnail)
         } else {
             const thumbnailsPath = path.join(THUMBNAILS_PATH, bookName)
             thumbnail = findPageThumbnail(thumbnailsPath, i, bookName)
+            if (i === 1) console.log(`📸 Page 1 thumbnail (Local):`, thumbnail)
         }
 
         if (existingPage) {
