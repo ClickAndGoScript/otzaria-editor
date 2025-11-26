@@ -31,6 +31,8 @@ export default function EditPage() {
   const [showSplitDialog, setShowSplitDialog] = useState(false)
   const [rightColumnName, setRightColumnName] = useState('חלק 1')
   const [leftColumnName, setLeftColumnName] = useState('חלק 2')
+  const [splitMode, setSplitMode] = useState('content') // 'content' או 'visual'
+  const [isContentSplit, setIsContentSplit] = useState(false) // האם זה פיצול תוכן אמיתי
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -132,7 +134,7 @@ export default function EditPage() {
   // שמירה אוטומטית עם debounce
   const debouncedSave = (() => {
     let timeout
-    return (contentText, leftText, rightText, twoCol) => {
+    return (contentText, leftText, rightText, twoCol, isContentSplitMode, rightName, leftName) => {
       clearTimeout(timeout)
       timeout = setTimeout(async () => {
         try {
@@ -146,8 +148,9 @@ export default function EditPage() {
               leftColumn: leftText,
               rightColumn: rightText,
               twoColumns: twoCol,
-              rightColumnName,
-              leftColumnName
+              isContentSplit: isContentSplitMode ?? isContentSplit,
+              rightColumnName: rightName ?? rightColumnName,
+              leftColumnName: leftName ?? leftColumnName
             })
           })
           console.log('✅ Auto-saved')
@@ -179,10 +182,11 @@ export default function EditPage() {
     setRightColumn(content)
     setLeftColumn('')
     setTwoColumns(true)
+    setIsContentSplit(splitMode === 'content')
     setShowSplitDialog(false)
     
     // שמור מיד
-    debouncedSave(content, '', content, true)
+    debouncedSave(content, '', content, true, splitMode === 'content', rightColumnName, leftColumnName)
   }
 
   const handleFindReplace = (replaceAll = false) => {
@@ -911,44 +915,89 @@ export default function EditPage() {
               </div>
             </div>
 
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
-              <div className="flex items-start gap-2">
-                <span className="material-symbols-outlined text-blue-600">info</span>
-                <div className="text-sm text-blue-800">
-                  <p className="font-bold mb-1">שני מצבים:</p>
-                  <p className="mb-2">• <strong>פיצול תוכן</strong>: העמוד מכיל שני חלקים שונים (טורים)</p>
-                  <p>• <strong>חלוקה ויזואלית</strong>: רק לנוחות העריכה, בהעלאה יאוחדו</p>
-                  <p className="mt-2 text-xs text-blue-600">הטקסט הקיים יועבר לחלק 1</p>
+            <div className="space-y-4 mb-6">
+              {/* Mode Selection */}
+              <div>
+                <label className="block text-sm font-medium text-on-surface mb-3">
+                  בחר סוג פיצול:
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors hover:bg-surface/50"
+                    style={{ borderColor: splitMode === 'content' ? '#6b5d4f' : '#e7e0d8' }}
+                  >
+                    <input
+                      type="radio"
+                      name="splitMode"
+                      value="content"
+                      checked={splitMode === 'content'}
+                      onChange={(e) => setSplitMode(e.target.value)}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="material-symbols-outlined text-primary text-sm">splitscreen</span>
+                        <span className="font-bold text-on-surface">פיצול תוכן</span>
+                      </div>
+                      <p className="text-xs text-on-surface/70">
+                        העמוד מכיל שני חלקים שונים. בהעלאה יישמרו עם כותרות.
+                      </p>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors hover:bg-surface/50"
+                    style={{ borderColor: splitMode === 'visual' ? '#6b5d4f' : '#e7e0d8' }}
+                  >
+                    <input
+                      type="radio"
+                      name="splitMode"
+                      value="visual"
+                      checked={splitMode === 'visual'}
+                      onChange={(e) => setSplitMode(e.target.value)}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="material-symbols-outlined text-blue-600 text-sm">visibility</span>
+                        <span className="font-bold text-on-surface">חלוקה ויזואלית</span>
+                      </div>
+                      <p className="text-xs text-on-surface/70">
+                        רק לנוחות העריכה. בהעלאה יאוחדו לטקסט אחד.
+                      </p>
+                    </div>
+                  </label>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-on-surface mb-2">
-                  שם חלק 1 (טור ימני):
-                </label>
-                <input
-                  type="text"
-                  value={rightColumnName}
-                  onChange={(e) => setRightColumnName(e.target.value)}
-                  className="w-full px-4 py-2 border-2 border-surface-variant rounded-lg focus:outline-none focus:border-primary bg-white text-on-surface"
-                  placeholder="לדוגמה: טור ראשי"
-                />
-              </div>
+              {/* Column Names - only for content split */}
+              {splitMode === 'content' && (
+                <div className="space-y-3 pt-2">
+                  <div>
+                    <label className="block text-sm font-medium text-on-surface mb-2">
+                      שם חלק 1 (טור ימני):
+                    </label>
+                    <input
+                      type="text"
+                      value={rightColumnName}
+                      onChange={(e) => setRightColumnName(e.target.value)}
+                      className="w-full px-4 py-2 border-2 border-surface-variant rounded-lg focus:outline-none focus:border-primary bg-white text-on-surface"
+                      placeholder="לדוגמה: טור ראשי"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-on-surface mb-2">
-                  שם חלק 2 (טור שמאלי):
-                </label>
-                <input
-                  type="text"
-                  value={leftColumnName}
-                  onChange={(e) => setLeftColumnName(e.target.value)}
-                  className="w-full px-4 py-2 border-2 border-surface-variant rounded-lg focus:outline-none focus:border-primary bg-white text-on-surface"
-                  placeholder="לדוגמה: הערות"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-on-surface mb-2">
+                      שם חלק 2 (טור שמאלי):
+                    </label>
+                    <input
+                      type="text"
+                      value={leftColumnName}
+                      onChange={(e) => setLeftColumnName(e.target.value)}
+                      className="w-full px-4 py-2 border-2 border-surface-variant rounded-lg focus:outline-none focus:border-primary bg-white text-on-surface"
+                      placeholder="לדוגמה: הערות"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3">
