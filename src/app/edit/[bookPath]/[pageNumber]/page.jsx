@@ -48,6 +48,8 @@ export default function EditPage() {
       if (bookResult.success) {
         setBookData(bookResult.book)
         const page = bookResult.pages.find(p => p.number === pageNumber)
+        console.log('📄 Page data for edit:', page)
+        console.log('🖼️ Thumbnail URL:', page?.thumbnail)
         setPageData(page)
       } else {
         setError(bookResult.error || 'שגיאה בטעינת הספר')
