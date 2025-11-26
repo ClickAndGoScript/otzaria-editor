@@ -63,12 +63,6 @@ export default function Features() {
 
   return (
     <section id="features" className="py-20 px-4 bg-surface relative overflow-hidden">
-      {/* דקורציה ברקע */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-5">
-        <div className="absolute top-10 right-20 text-9xl">📚</div>
-        <div className="absolute bottom-20 left-20 text-9xl">✍️</div>
-      </div>
-
       <div className="container mx-auto relative z-10" ref={ref}>
         <motion.div
           initial={{ opacity: 0, y: -20 }}
