@@ -171,17 +171,16 @@ export default function LibraryPage() {
           {/* Top Container - Header + Description + Search | Chart */}
           <div className="grid lg:grid-cols-2 gap-6 mb-8">
             {/* Left Side - Header + Description + Search */}
-            <div className="flex flex-col justify-between">
-              <div>
-                <h1 className="text-4xl font-bold mb-4 text-on-surface" style={{ fontFamily: 'FrankRuehl, serif' }}>ספריית אוצריא</h1>
-                
-                <p className="text-on-surface/70 leading-relaxed mb-6">
-                  ספרייה זו כוללת ספרים מאתר <span className="font-bold">hebrewbooks</span> שמיועדים להוספה למאגר אוצריא. 
-                  יחד נגדיל את מאגר הטקסט התורני הגדול בעולם!
-                </p>
-              </div>
+            <div className="flex flex-col">
+              <h1 className="text-4xl font-bold mb-4 text-on-surface" style={{ fontFamily: 'FrankRuehl, serif' }}>ספריית אוצריא</h1>
               
-              <div className="relative">
+              <p className="text-on-surface/70 leading-relaxed mb-auto">
+                ספרייה זו כוללת ספרים מאתר <span className="font-bold">hebrewbooks</span> שמיועדים להוספה למאגר אוצריא.
+                <br />
+                יחד נגדיל את מאגר הטקסט התורני הגדול בעולם!
+              </p>
+              
+              <div className="relative mt-4">
                 <input
                   type="text"
                   value={searchTerm}
