@@ -79,7 +79,7 @@ export async function loadLibraryStructure() {
 }
 
 /**
- * סריקת תמונות מ-Blob Storage
+ * סריקת תמונות מ-GitHub (לא בשימוש - קוראים מ-MongoDB)
  */
 async function scanBlobThumbnails() {
   try {
@@ -87,35 +87,31 @@ async function scanBlobThumbnails() {
     const blobs = await listFiles('thumbnails')
     logger.log('📦 Total blobs found:', blobs.length)
     
-    if (blobs.length > 0) {
-      logger.log('📄 First blob example:', blobs[0])
+    // טען מיפוי
+    const { readJSON } = await import('./storage.js')
+    const mapping = await readJSON('data/book-mapping.json')
+    
+    if (!mapping) {
+      logger.warn('⚠️  No book mapping found')
+      return []
     }
     
     const books = new Map()
 
     for (const blob of blobs) {
-      logger.log('  Processing blob:', blob.pathname)
+      // שם קובץ לדוגמה: book_abc123_page-1.jpg
+      const fileName = blob.pathname.split('/').pop()
       
-      // נתיב לדוגמה: thumbnails_חוות_דעת_page-1.jpg
-      const fileName = blob.pathname.split('/').pop() // קבל רק את שם הקובץ
+      // חלץ את ה-book ID
+      const match = fileName.match(/^(book_[a-f0-9]+)_/)
+      if (!match) continue
       
-      if (!fileName.startsWith('thumbnails_')) {
-        logger.log('    ⏭️  Skipping - not a thumbnail')
-        continue
-      }
+      const bookId = match[1]
+      const bookName = mapping[bookId]
       
-      // פרק את שם הקובץ: thumbnails_חוות_דעת_page-1.jpg
-      const parts = fileName.replace('thumbnails_', '').split('_')
-      
-      // הסר את החלק האחרון (page-X.jpg)
-      const pagePart = parts.pop()
-      
-      // מה שנשאר הוא שם הספר
-      const bookName = parts.join('_').replace(/_/g, ' ')
-      logger.log('    📖 Book name:', bookName)
+      if (!bookName) continue
       
       if (!books.has(bookName)) {
-        // המר Date object ל-string
         const uploadDate = blob.uploadedAt instanceof Date 
           ? blob.uploadedAt.toISOString().split('T')[0]
           : new Date().toISOString().split('T')[0]
@@ -129,18 +125,16 @@ async function scanBlobThumbnails() {
           editor: null,
           path: bookName,
           pageCount: 0,
-          thumbnailsPath: `/thumbnails/${bookName}`,
         })
-        logger.log('    ✅ Created book entry')
       }
 
       books.get(bookName).pageCount++
     }
 
-    logger.log('📚 Total books found in Blob:', books.size)
+    logger.log('📚 Total books found:', books.size)
     return Array.from(books.values())
   } catch (error) {
-    logger.error('❌ Error scanning blob thumbnails:', error)
+    logger.error('❌ Error scanning thumbnails:', error)
     return []
   }
 }

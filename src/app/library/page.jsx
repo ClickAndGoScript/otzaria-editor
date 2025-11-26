@@ -173,13 +173,13 @@ export default function LibraryPage() {
             <div className="flex flex-col">
               <h1 className="text-4xl font-bold mb-4 text-on-surface" style={{ fontFamily: 'FrankRuehl, serif' }}>ספריית אוצריא</h1>
               
-              <p className="text-on-surface/70 leading-relaxed mb-auto">
+              <p className="text-on-surface/150 leading-relaxed" style={{ marginBottom: '20px' }}>
                 ספרייה זו כוללת ספרים מאתר <span className="font-bold">hebrewbooks</span> שמיועדים להוספה למאגר אוצריא.
                 <br />
                 יחד נגדיל את מאגר הטקסט התורני הגדול בעולם!
               </p>
               
-              <div className="relative mt-4">
+              <div className="relative">
                 <input
                   type="text"
                   value={searchTerm}
@@ -414,53 +414,40 @@ function CardGridView({ items, onFileClick }) {
   const files = flattenItems(items)
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5">
       {files.map((file) => {
-        const status = statusConfig[file.status]
         return (
           <div
             key={file.id}
             onClick={() => onFileClick(file)}
-            className="group relative bg-surface hover:bg-surface-variant rounded-xl p-6 cursor-pointer transition-all duration-200 border border-surface-variant hover:border-primary hover:shadow-lg"
+            className="group relative rounded-3xl p-6 cursor-pointer transition-all duration-200 shadow-md hover:shadow-xl border border-gray-200"
+            style={{ minHeight: '140px', backgroundColor: '#F5EFE7' }}
           >
-            {/* Status indicator - top right */}
-            <div className="absolute top-3 left-3">
-              <div className={`w-2 h-2 rounded-full ${status.color === 'text-green-600' ? 'bg-green-500' : status.color === 'text-blue-600' ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
-            </div>
-
-            {/* Info icon - top left */}
-            <button 
-              className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => {
-                e.stopPropagation()
-                // Show info
-              }}
-            >
-              <span className="material-symbols-outlined text-lg text-on-surface/40 hover:text-on-surface">
-                info
-              </span>
-            </button>
-
-            {/* Book content */}
-            <div className="flex flex-col items-center text-center">
-              {/* Icon */}
-              <div className="mb-4">
-                <span className="material-symbols-outlined text-5xl text-on-surface/60">
-                  menu_book
+            {/* Top row - icons and title */}
+            <div className="flex items-start justify-between gap-3">
+              {/* Document icon - left */}
+              <div className="flex-shrink-0 p-1">
+                <span className="material-symbols-outlined text-2xl" style={{ color: '#8B7355' }}>
+                  description
                 </span>
               </div>
 
-              {/* Book name */}
-              <h3 className="font-bold text-on-surface mb-2 line-clamp-2 min-h-[3rem]">
+              {/* Book name - right aligned */}
+              <h3 className="flex-1 text-right text-lg font-bold" style={{ color: '#8B6F47', fontFamily: 'FrankRuehl, serif' }}>
                 {file.name}
               </h3>
 
-              {/* Path - if exists */}
-              {file.path && file.path.length > 1 && (
-                <p className="text-xs text-on-surface/50 line-clamp-1">
-                  {file.path.slice(0, -1).join(' / ')}
-                </p>
-              )}
+              {/* Info icon - far right */}
+              <button 
+                className="flex-shrink-0 p-1 rounded-full hover:bg-white/50 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                }}
+              >
+                <span className="material-symbols-outlined text-2xl" style={{ color: '#8B7355' }}>
+                  info
+                </span>
+              </button>
             </div>
           </div>
         )

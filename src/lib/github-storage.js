@@ -115,6 +115,31 @@ export async function getImageUrl(path) {
   }
 }
 
+// טען מיפוי ספרים
+async function loadBookMapping() {
+  try {
+    const { readJSON } = await import('./storage.js')
+    const mapping = await readJSON('data/book-mapping.json')
+    return mapping || {}
+  } catch (error) {
+    logger.error('❌ Error loading book mapping:', error)
+    return {}
+  }
+}
+
+// המר ID באנגלית לשם עברי
+async function getBookNameFromId(bookId) {
+  const mapping = await loadBookMapping()
+  return mapping[bookId] || bookId
+}
+
+// המר שם עברי ל-ID באנגלית
+async function getBookIdFromName(bookName) {
+  const mapping = await loadBookMapping()
+  const entry = Object.entries(mapping).find(([id, name]) => name === bookName)
+  return entry ? entry[0] : null
+}
+
 // רשימת כל התמונות
 export async function listImages(prefix = '') {
   try {
@@ -127,10 +152,20 @@ export async function listImages(prefix = '') {
       per_page: 100,
     })
     
+    // אם יש prefix (שם ספר), המר אותו ל-ID
+    let filterPrefix = prefix
+    if (prefix && prefix.includes('thumbnails/')) {
+      const bookName = prefix.replace('thumbnails/', '').replace('/', '')
+      const bookId = await getBookIdFromName(bookName)
+      if (bookId) {
+        filterPrefix = bookId
+      }
+    }
+    
     return assets
-      .filter(a => a.name.startsWith(prefix.replace(/\//g, '_')))
+      .filter(a => !filterPrefix || a.name.startsWith(filterPrefix))
       .map(a => ({
-        pathname: a.name.replace(/_/g, '/'),
+        pathname: a.name,
         url: a.browser_download_url,
         size: a.size,
         uploadedAt: a.created_at,

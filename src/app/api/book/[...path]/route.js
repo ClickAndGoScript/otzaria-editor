@@ -331,37 +331,40 @@ async function createPagesData(numPages, existingData = [], bookName) {
     return pagesData
 }
 
-// מציאת תמונת עמוד מרשימת blobs
+// מציאת תמונת עמוד מרשימת blobs (עם מיפוי)
 function findPageThumbnailFromBlobs(thumbnails, pageNumber, bookName) {
-    // נסה פורמטים שונים של שמות קבצים
-    const possibleNames = [
+    // פורמט חדש: book_abc123_page-1.jpg
+    // thumbnails כבר מסוננים לפי ספר, אז פשוט נחפש את המספר
+    
+    const possiblePatterns = [
         `page-${pageNumber}.jpg`,
         `page-${pageNumber}.jpeg`,
         `page-${pageNumber}.png`,
         `page_${pageNumber}.jpg`,
         `${pageNumber}.jpg`,
-        `${String(pageNumber).padStart(3, '0')}.jpg`, // 001.jpg
-        `page-${String(pageNumber).padStart(3, '0')}.jpg`, // page-001.jpg
     ]
 
-    for (const name of possibleNames) {
-        const found = thumbnails.find(t => t.name === name)
+    for (const pattern of possiblePatterns) {
+        const found = thumbnails.find(t => {
+            const fileName = t.pathname || t.name
+            return fileName.endsWith(`_${pattern}`) || fileName.endsWith(pattern)
+        })
+        
         if (found) {
-            console.log(`   ✅ Found thumbnail for page ${pageNumber}: ${name}`)
+            console.log(`   ✅ Found thumbnail for page ${pageNumber}`)
             return found.url
         }
     }
 
-    // אם לא נמצא, נסה חיפוש גמיש יותר
+    // חיפוש גמיש
     const flexibleMatch = thumbnails.find(t => {
-        const fileName = t.name.toLowerCase()
-        return fileName.includes(`${pageNumber}.`) || 
-               fileName.includes(`-${pageNumber}.`) ||
+        const fileName = (t.pathname || t.name).toLowerCase()
+        return fileName.includes(`_page-${pageNumber}.`) || 
                fileName.includes(`_${pageNumber}.`)
     })
     
     if (flexibleMatch) {
-        console.log(`   ✅ Found thumbnail (flexible) for page ${pageNumber}: ${flexibleMatch.name}`)
+        console.log(`   ✅ Found thumbnail (flexible) for page ${pageNumber}`)
         return flexibleMatch.url
     }
 
