@@ -421,21 +421,11 @@ export default function EditPage() {
             <div className="flex items-center justify-between gap-4">
               {/* Left Side - Image Tools */}
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">image</span>
-                  <span className="font-bold text-on-surface">תמונת העמוד</span>
-                </div>
-                <div className="w-px h-6 bg-surface-variant"></div>
                 <span className="text-sm text-on-surface/60">עמוד {pageNumber} מתוך {bookData?.totalPages}</span>
               </div>
 
               {/* Right Side - Text Tools */}
               <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">edit_note</span>
-                  <span className="font-bold text-on-surface">עריכת טקסט</span>
-                </div>
-                <div className="w-px h-6 bg-surface-variant"></div>
                 
                 {/* Text Formatting Buttons */}
                 <div className="flex items-center gap-1">
@@ -552,7 +542,7 @@ export default function EditPage() {
           {/* Split Content Area */}
           <div className="flex-1 flex overflow-hidden">
             {/* Image Side */}
-            <div className="w-1/2 overflow-auto p-4 bg-white border-l border-surface-variant">
+            <div className="w-1/2 overflow-auto p-4 border-l border-surface-variant">
               {thumbnailUrl ? (
                 <img 
                   src={thumbnailUrl} 
