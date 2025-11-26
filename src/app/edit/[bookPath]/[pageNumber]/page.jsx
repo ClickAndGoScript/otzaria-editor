@@ -501,15 +501,13 @@ export default function EditPage() {
                 <button
                   onClick={handleOCR}
                   disabled={isOcrProcessing || !thumbnailUrl}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                  className="flex items-center gap-1 p-2 hover:bg-white rounded transition-colors border border-transparent hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   title="זיהוי טקסט אוטומטי מהתמונה (OCR)"
                 >
-                  <span className="material-symbols-outlined text-lg">
+                  <span className={`material-symbols-outlined text-lg ${isOcrProcessing ? 'animate-spin' : ''}`}>
                     {isOcrProcessing ? 'progress_activity' : 'text_fields'}
                   </span>
-                  <span className="text-sm font-bold">
-                    {isOcrProcessing ? 'מעבד...' : 'OCR'}
-                  </span>
+                  {isOcrProcessing && <span className="text-sm">מעבד...</span>}
                 </button>
                 
                 <div className="w-px h-6 bg-surface-variant"></div>
