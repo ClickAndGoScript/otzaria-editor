@@ -32,14 +32,6 @@ export default function EditPage() {
   const [findText, setFindText] = useState('')
   const [replaceText, setReplaceText] = useState('')
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/login')
-    } else if (status === 'authenticated') {
-      loadPageData()
-    }
-  }, [status, router, loadPageData])
-
   const loadPageData = useCallback(async () => {
     try {
       setLoading(true)
@@ -72,6 +64,14 @@ export default function EditPage() {
       setLoading(false)
     }
   }, [bookPath, pageNumber])
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/login')
+    } else if (status === 'authenticated') {
+      loadPageData()
+    }
+  }, [status, router, loadPageData])
 
   const handleSave = async () => {
     setSaving(true)
