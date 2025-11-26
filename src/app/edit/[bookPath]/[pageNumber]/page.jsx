@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { getAvatarColor, getInitial } from '@/lib/avatar-colors'
 
 export default function EditPage() {
   const { data: session, status } = useSession()
@@ -45,6 +46,7 @@ export default function EditPage() {
       if (bookResult.success) {
         setBookData(bookResult.book)
         const page = bookResult.pages.find(p => p.number === pageNumber)
+        console.log('Page data:', page) // Debug log
         setPageData(page)
       }
       
@@ -334,7 +336,18 @@ export default function EditPage() {
     )
   }
 
-  const thumbnailUrl = pageData?.thumbnail || null
+  const thumbnailUrl = pageData?.thumbnail
+  
+  // Debug logging
+  useEffect(() => {
+    if (pageData) {
+      console.log('Page data loaded:', {
+        pageNumber: pageData.number,
+        hasThumbnail: !!pageData.thumbnail,
+        thumbnailUrl: pageData.thumbnail
+      })
+    }
+  }, [pageData])
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -371,9 +384,18 @@ export default function EditPage() {
                 <span>{saving ? 'שומר...' : 'שמור'}</span>
               </button>
               
-              <div className="text-left">
-                <p className="text-sm font-medium text-on-surface">{session?.user?.name}</p>
-              </div>
+              <Link 
+                href="/dashboard" 
+                className="flex items-center justify-center hover:opacity-80 transition-opacity"
+                title={session?.user?.name}
+              >
+                <div 
+                  className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-base shadow-md hover:shadow-lg transition-shadow"
+                  style={{ backgroundColor: getAvatarColor(session?.user?.name || '') }}
+                >
+                  {getInitial(session?.user?.name || '')}
+                </div>
+              </Link>
             </div>
           </div>
         </div>
@@ -398,17 +420,29 @@ export default function EditPage() {
                     src={thumbnailUrl} 
                     alt={`עמוד ${pageNumber}`}
                     className="w-full h-auto rounded-lg shadow-lg"
+                    onError={(e) => {
+                      console.error('Failed to load image:', thumbnailUrl)
+                      e.target.style.display = 'none'
+                      e.target.nextSibling.style.display = 'flex'
+                    }}
                   />
-                ) : (
-                  <div className="flex items-center justify-center min-h-[600px] bg-surface rounded-lg">
-                    <div className="text-center">
-                      <span className="material-symbols-outlined text-9xl text-on-surface/20 block mb-4">
-                        description
-                      </span>
-                      <p className="text-on-surface/60">אין תמונה זמינה</p>
-                    </div>
+                ) : null}
+                <div 
+                  className="flex items-center justify-center min-h-[600px] bg-surface rounded-lg"
+                  style={{ display: thumbnailUrl ? 'none' : 'flex' }}
+                >
+                  <div className="text-center">
+                    <span className="material-symbols-outlined text-9xl text-on-surface/20 block mb-4">
+                      description
+                    </span>
+                    <p className="text-on-surface/60">אין תמונה זמינה</p>
+                    {pageData && (
+                      <p className="text-xs text-on-surface/40 mt-2">
+                        (עמוד {pageNumber})
+                      </p>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
