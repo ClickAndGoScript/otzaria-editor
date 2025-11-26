@@ -45,6 +45,7 @@ export default function BookPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState(null)
+  const [uploadDialog, setUploadDialog] = useState(null)
 
   useEffect(() => {
     loadBookData()
@@ -133,9 +134,24 @@ export default function BookPage() {
   const handleMarkComplete = async (pageNumber) => {
     if (!session) return
 
+    // פתח דיאלוג העלאה
+    setUploadDialog({
+      pageNumber,
+      onConfirm: async () => {
+        await uploadPageText(pageNumber)
+        setUploadDialog(null)
+      },
+      onSkip: async () => {
+        await completePageWithoutUpload(pageNumber)
+        setUploadDialog(null)
+      },
+      onCancel: () => setUploadDialog(null)
+    })
+  }
+
+  const completePageWithoutUpload = async (pageNumber) => {
     try {
-      // bookPath כבר מפוענח מ-params, אז נשתמש בו ישירות
-      console.log('✅ Completing page:', { bookPath, pageNumber })
+      console.log('✅ Completing page without upload:', { bookPath, pageNumber })
       
       const response = await fetch(`/api/book/complete-page`, {
         method: 'POST',
@@ -147,11 +163,9 @@ export default function BookPage() {
         })
       })
       
-      console.log('📥 Complete response status:', response.status)
       const result = await response.json()
       
       if (result.success) {
-        // עדכן את הדף המקומי
         setPages(prevPages => 
           prevPages.map(page => 
             page.number === pageNumber ? result.page : page
@@ -164,6 +178,62 @@ export default function BookPage() {
     } catch (error) {
       console.error('Error completing page:', error)
       alert('❌ שגיאה בסימון העמוד כהושלם')
+    }
+  }
+
+  const uploadPageText = async (pageNumber) => {
+    try {
+      // טען את התוכן שנערך
+      const contentResponse = await fetch(`/api/page-content?bookPath=${encodeURIComponent(bookPath)}&pageNumber=${pageNumber}`)
+      const contentResult = await contentResponse.json()
+      
+      if (!contentResult.success || !contentResult.data) {
+        alert('❌ לא נמצא תוכן לעמוד זה')
+        return
+      }
+
+      const data = contentResult.data
+      let textContent = ''
+      
+      if (data.twoColumns) {
+        textContent = data.rightColumn + '\n' + data.leftColumn
+      } else {
+        textContent = data.content
+      }
+
+      if (!textContent.trim()) {
+        alert('❌ העמוד ריק, אין מה להעלות')
+        return
+      }
+
+      // צור קובץ טקסט
+      const blob = new Blob([textContent], { type: 'text/plain' })
+      const file = new File([blob], `${bookPath}_עמוד_${pageNumber}.txt`, { type: 'text/plain' })
+
+      // העלה את הקובץ
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('bookName', `${bookPath} - עמוד ${pageNumber}`)
+      formData.append('userId', session.user.id)
+      formData.append('userName', session.user.name)
+
+      const uploadResponse = await fetch('/api/upload-book', {
+        method: 'POST',
+        body: formData
+      })
+
+      const uploadResult = await uploadResponse.json()
+
+      if (uploadResult.success) {
+        // סמן את העמוד כהושלם
+        await completePageWithoutUpload(pageNumber)
+        alert('✅ הטקסט הועלה בהצלחה והעמוד סומן כהושלם!')
+      } else {
+        alert(`❌ ${uploadResult.error || 'שגיאה בהעלאת הטקסט'}`)
+      }
+    } catch (error) {
+      console.error('Error uploading text:', error)
+      alert('❌ שגיאה בהעלאת הטקסט')
     }
   }
 
@@ -300,6 +370,17 @@ export default function BookPage() {
           onCancel={confirmDialog.onCancel}
         />
       )}
+
+      {/* Upload Dialog */}
+      {uploadDialog && (
+        <UploadDialog
+          pageNumber={uploadDialog.pageNumber}
+          bookName={bookData?.name}
+          onConfirm={uploadDialog.onConfirm}
+          onSkip={uploadDialog.onSkip}
+          onCancel={uploadDialog.onCancel}
+        />
+      )}
     </div>
   )
 }
@@ -433,6 +514,69 @@ function ConfirmDialog({ pageNumber, userName, onConfirm, onCancel }) {
           >
             <span className="material-symbols-outlined">check_circle</span>
             <span>כן, אני רוצה לעבוד על זה</span>
+          </button>
+          <button
+            onClick={onCancel}
+            className="px-6 py-3 border-2 border-surface-variant text-on-surface rounded-lg hover:bg-surface transition-colors"
+          >
+            ביטול
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Upload Dialog Component
+function UploadDialog({ pageNumber, bookName, onConfirm, onSkip, onCancel }) {
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onCancel}>
+      <div className="glass-strong rounded-2xl p-8 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="material-symbols-outlined text-4xl text-green-600">
+              upload_file
+            </span>
+          </div>
+          <h2 className="text-2xl font-bold text-on-surface mb-2">
+            סיום עבודה על עמוד {pageNumber}
+          </h2>
+          <p className="text-on-surface/70">
+            האם ברצונך להעלות את הטקסט שערכת למערכת?
+          </p>
+        </div>
+
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-blue-600 mt-0.5">
+              info
+            </span>
+            <div className="text-sm text-blue-800">
+              <p className="font-bold mb-1">מה יקרה?</p>
+              <ul className="space-y-1">
+                <li>• הטקסט שערכת יועלה כקובץ חדש</li>
+                <li>• הקובץ יישלח לאישור מנהל</li>
+                <li>• העמוד יסומן כהושלם</li>
+                <li>• ניתן גם לדלג על ההעלאה</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={onConfirm}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-bold"
+          >
+            <span className="material-symbols-outlined">upload</span>
+            <span>כן, העלה את הטקסט</span>
+          </button>
+          <button
+            onClick={onSkip}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-lg hover:bg-accent transition-colors font-bold"
+          >
+            <span className="material-symbols-outlined">check_circle</span>
+            <span>דלג על העלאה וסמן כהושלם</span>
           </button>
           <button
             onClick={onCancel}
