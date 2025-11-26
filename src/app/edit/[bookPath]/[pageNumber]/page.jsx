@@ -10,8 +10,13 @@ export default function EditPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
-  const bookPath = params.bookPath // Next.js already decodes this
+  
+  // פענח את ה-path - Next.js לא תמיד מפענח אוטומטית
+  const rawBookPath = params.bookPath
+  const bookPath = rawBookPath.includes('%') ? decodeURIComponent(rawBookPath) : rawBookPath
   const pageNumber = parseInt(params.pageNumber)
+  
+  console.log('Edit page - raw:', rawBookPath, 'decoded:', bookPath)
   
   const [bookData, setBookData] = useState(null)
   const [pageData, setPageData] = useState(null)
