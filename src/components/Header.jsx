@@ -17,17 +17,14 @@ export default function Header() {
         </Link>
         
         <nav className="hidden md:flex items-center gap-6">
-          <Link href="/library" className="flex items-center gap-2 text-on-surface hover:text-primary transition-colors">
-            <span className="material-symbols-outlined">library_books</span>
-            <span>ספרייה</span>
+          <Link href="/library" className="text-on-surface hover:text-primary transition-colors">
+            ספרייה
           </Link>
-          <Link href="/users" className="flex items-center gap-2 text-on-surface hover:text-primary transition-colors">
-            <span className="material-symbols-outlined">person</span>
-            <span>משתמשים</span>
+          <Link href="/users" className="text-on-surface hover:text-primary transition-colors">
+            משתמשים
           </Link>
-          <Link href="/upload" className="flex items-center gap-2 text-on-surface hover:text-primary transition-colors">
-            <span className="material-symbols-outlined">send</span>
-            <span>שליחת ספרים</span>
+          <Link href="/upload" className="text-on-surface hover:text-primary transition-colors">
+            שליחת ספרים
           </Link>
           
           {session ? (
