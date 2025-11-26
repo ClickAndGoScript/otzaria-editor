@@ -3,9 +3,13 @@ import { loadLibraryStructure } from '@/lib/library-loader'
 
 export const runtime = 'nodejs'
 
-export async function GET() {
+export async function GET(request) {
   try {
-    const structure = await loadLibraryStructure()
+    // בדוק אם יש פרמטר refresh
+    const { searchParams } = new URL(request.url)
+    const forceRefresh = searchParams.get('refresh') === 'true'
+    
+    const structure = await loadLibraryStructure(forceRefresh)
     
     return NextResponse.json({
       success: true,

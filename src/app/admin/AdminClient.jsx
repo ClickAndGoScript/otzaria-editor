@@ -14,6 +14,9 @@ export default function AdminClient({ session }) {
     const [activeTab, setActiveTab] = useState('users')
     const [editingUser, setEditingUser] = useState(null)
     const [deleteConfirm, setDeleteConfirm] = useState(null)
+    const [showAddBook, setShowAddBook] = useState(false)
+    const [newBookName, setNewBookName] = useState('')
+    const [addingBook, setAddingBook] = useState(false)
 
     useEffect(() => {
         loadData()
@@ -106,13 +109,63 @@ export default function AdminClient({ session }) {
 
             const result = await response.json()
             if (result.success) {
-                setBooks(books.filter(b => b.path !== bookPath))
+                // עדכן את הרשימה מיד
+                setBooks(books.filter(b => b.path !== bookPath && b.name !== bookPath && b.id !== bookPath))
+                
+                // רענן גם את הנתונים מהשרת
+                const booksRes = await fetch('/api/library/list?refresh=true')
+                const booksData = await booksRes.json()
+                if (booksData.success) {
+                    setBooks(booksData.books)
+                }
+                
+                alert('הספר נמחק בהצלחה!')
             } else {
                 alert(result.error || 'שגיאה במחיקת ספר')
             }
         } catch (error) {
             console.error('Error deleting book:', error)
             alert('שגיאה במחיקת ספר')
+        }
+    }
+
+    const handleAddBook = async () => {
+        if (!newBookName.trim()) {
+            alert('נא להזין שם ספר')
+            return
+        }
+
+        try {
+            setAddingBook(true)
+            const response = await fetch('/api/admin/books/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bookName: newBookName.trim() })
+            })
+
+            const result = await response.json()
+            if (result.success) {
+                // רענן את הרשימה מהשרת
+                const booksRes = await fetch('/api/library/list?refresh=true')
+                const booksData = await booksRes.json()
+                if (booksData.success) {
+                    setBooks(booksData.books)
+                } else {
+                    // אם נכשל, לפחות הוסף את הספר החדש
+                    setBooks([...books, result.book])
+                }
+                
+                setNewBookName('')
+                setShowAddBook(false)
+                alert(result.message)
+            } else {
+                alert(result.error || 'שגיאה בהוספת ספר')
+            }
+        } catch (error) {
+            console.error('Error adding book:', error)
+            alert('שגיאה בהוספת ספר')
+        } finally {
+            setAddingBook(false)
         }
     }
 
@@ -421,7 +474,16 @@ export default function AdminClient({ session }) {
 
                         {activeTab === 'books' && (
                             <div className="glass-strong p-6 rounded-xl">
-                                <h2 className="text-2xl font-bold mb-6 text-on-surface">ניהול ספרים</h2>
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-2xl font-bold text-on-surface">ניהול ספרים</h2>
+                                    <button
+                                        onClick={() => setShowAddBook(true)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-accent transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined">add</span>
+                                        <span>הוסף ספר</span>
+                                    </button>
+                                </div>
                                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {books.map(book => (
                                         <div key={book.path} className="glass p-4 rounded-lg">
@@ -656,6 +718,45 @@ export default function AdminClient({ session }) {
                             <button
                                 onClick={() => setDeleteConfirm(null)}
                                 className="flex-1 px-4 py-3 glass rounded-lg hover:bg-surface-variant"
+                            >
+                                ביטול
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Book Modal */}
+            {showAddBook && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="glass-strong p-8 rounded-2xl max-w-md mx-4 w-full">
+                        <h3 className="text-2xl font-bold mb-4 text-on-surface">הוסף ספר חדש</h3>
+                        <p className="text-on-surface/70 mb-4 text-sm">
+                            הזן את שם הספר בדיוק כפי שהוא מופיע ב-GitHub Releases
+                        </p>
+                        <input
+                            type="text"
+                            value={newBookName}
+                            onChange={(e) => setNewBookName(e.target.value)}
+                            placeholder="שם הספר..."
+                            className="w-full px-4 py-3 border border-surface-variant rounded-lg focus:outline-none focus:border-primary bg-white text-on-surface mb-6"
+                            disabled={addingBook}
+                        />
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleAddBook}
+                                disabled={addingBook}
+                                className="flex-1 px-4 py-3 bg-primary text-on-primary rounded-lg hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {addingBook ? 'מוסיף...' : 'הוסף'}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowAddBook(false)
+                                    setNewBookName('')
+                                }}
+                                disabled={addingBook}
+                                className="flex-1 px-4 py-3 glass rounded-lg hover:bg-surface-variant transition-colors disabled:opacity-50"
                             >
                                 ביטול
                             </button>

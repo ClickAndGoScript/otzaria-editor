@@ -15,13 +15,22 @@ let cacheTime = null
 const CACHE_DURATION = 10 * 60 * 1000 // 10 דקות
 
 /**
+ * נקה את ה-cache (לשימוש אחרי עדכון ספרים)
+ */
+export function clearLibraryCache() {
+  cachedStructure = null
+  cacheTime = null
+  logger.log('🗑️  Library cache cleared')
+}
+
+/**
  * קריאת מבנה הספרייה מתיקיית התמונות
  * כל תיקייה = ספר, כל תמונה = עמוד
  */
-export async function loadLibraryStructure() {
+export async function loadLibraryStructure(forceRefresh = false) {
   // בדוק cache
   const now = Date.now()
-  if (cachedStructure && cacheTime && (now - cacheTime) < CACHE_DURATION) {
+  if (!forceRefresh && cachedStructure && cacheTime && (now - cacheTime) < CACHE_DURATION) {
     logger.log('✅ Returning cached library structure')
     return cachedStructure
   }
