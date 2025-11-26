@@ -165,8 +165,8 @@ export default function EditPage() {
       // שמור מיד
       debouncedSave(content, leftText, rightText, true)
     } else {
-      // מעבר משניים לאחד - איחוד הטקסט
-      const combinedText = rightColumn + '\n\n' + leftColumn
+      // מעבר משניים לאחד - איחוד הטקסט (ללא רווחים מיותרים)
+      const combinedText = rightColumn + leftColumn
       setContent(combinedText)
       setTwoColumns(false)
       
@@ -527,7 +527,7 @@ export default function EditPage() {
 
                 <button
                   onClick={toggleColumns}
-                  className="p-2 bg-white border-2 border-surface-variant rounded-lg hover:border-primary transition-colors"
+                  className="p-2 hover:bg-white rounded transition-colors border border-transparent hover:border-primary"
                   title={twoColumns ? 'שני טורים' : 'טור אחד'}
                 >
                   <span className="material-symbols-outlined text-lg">
