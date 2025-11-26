@@ -168,70 +168,69 @@ export default function LibraryPage() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
-          {/* Top Section - Header, Search, Chart + Stats */}
-          <div className="grid lg:grid-cols-4 gap-6 mb-8">
-            {/* Left Side - Header, Search, Chart */}
-            <div className="lg:col-span-3">
-              {/* Page Header */}
-              <h1 className="text-4xl font-bold mb-6 text-on-surface" style={{ fontFamily: 'FrankRuehl, serif' }}>ספריית אוצריא</h1>
-              
-              {/* Search Bar */}
-              <div className="mb-6">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="חיפוש ספר..."
-                    className="w-full pr-12 pl-4 py-3 border border-surface-variant rounded-lg focus:outline-none focus:border-primary bg-white text-on-surface placeholder:text-on-surface/40 transition-colors shadow-sm"
-                  />
-                  <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface/40">
-                    search
-                  </span>
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm('')}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface/40 hover:text-on-surface transition-colors"
-                    >
-                      <span className="material-symbols-outlined">close</span>
-                    </button>
-                  )}
-                </div>
-              </div>
+          {/* Page Header - Full Width */}
+          <h1 className="text-4xl font-bold mb-6 text-on-surface" style={{ fontFamily: 'FrankRuehl, serif' }}>ספריית אוצריא</h1>
+          
+          {/* Search Bar - Full Width */}
+          <div className="mb-8">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="חיפוש ספר..."
+                className="w-full pr-12 pl-4 py-3 border border-surface-variant rounded-lg focus:outline-none focus:border-primary bg-white text-on-surface placeholder:text-on-surface/40 transition-colors shadow-sm"
+              />
+              <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface/40">
+                search
+              </span>
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface/40 hover:text-on-surface transition-colors"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              )}
+            </div>
+          </div>
 
-              {/* Progress Chart */}
+          {/* Chart + Stats Section */}
+          <div className="grid lg:grid-cols-6 gap-6 mb-8">
+            {/* Progress Chart - Takes 5 columns */}
+            <div className="lg:col-span-5">
               <WeeklyProgressChart />
             </div>
 
-            {/* Right Side - Stats Cards (Vertical) */}
+            {/* Stats Cards (Vertical) - Takes 1 column */}
             <div className="lg:col-span-1 space-y-4">
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border-2 border-green-200">
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border-2 border-green-200">
                 <div className="text-center">
-                  <div className="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="material-symbols-outlined text-2xl text-green-700">check_circle</span>
+                  <div className="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <span className="material-symbols-outlined text-xl text-green-700">check_circle</span>
                   </div>
-                  <p className="text-sm font-medium text-green-700 mb-1">הושלמו</p>
-                  <p className="text-3xl font-bold text-green-800">{stats.completed}</p>
+                  <p className="text-xs font-medium text-green-700 mb-1">הושלמו</p>
+                  <p className="text-2xl font-bold text-green-800">{stats.completed}</p>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border-2 border-blue-200">
                 <div className="text-center">
-                  <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="material-symbols-outlined text-2xl text-blue-700">edit</span>
+                  <div className="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <span className="material-symbols-outlined text-xl text-blue-700">edit</span>
                   </div>
-                  <p className="text-sm font-medium text-blue-700 mb-1">בטיפול</p>
-                  <p className="text-3xl font-bold text-blue-800">{stats['in-progress']}</p>
+                  <p className="text-xs font-medium text-blue-700 mb-1">בטיפול</p>
+                  <p className="text-2xl font-bold text-blue-800">{stats['in-progress']}</p>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border-2 border-gray-200">
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border-2 border-gray-200">
                 <div className="text-center">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="material-symbols-outlined text-2xl text-gray-700">description</span>
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <span className="material-symbols-outlined text-xl text-gray-700">description</span>
                   </div>
-                  <p className="text-sm font-medium text-gray-700 mb-1">זמינים</p>
-                  <p className="text-3xl font-bold text-gray-800">{stats.available}</p>
+                  <p className="text-xs font-medium text-gray-700 mb-1">זמינים</p>
+                  <p className="text-2xl font-bold text-gray-800">{stats.available}</p>
                 </div>
               </div>
             </div>
