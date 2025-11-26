@@ -32,10 +32,15 @@ async function migrateToMongoDB() {
       try {
         console.log(`\n📥 Processing: ${blob.pathname}`)
         
-        // הורד את הקובץ
-        const response = await fetch(blob.url)
+        // הורד את הקובץ עם authorization
+        const response = await fetch(blob.url, {
+          headers: {
+            'Authorization': `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`
+          }
+        })
+        
         if (!response.ok) {
-          throw new Error(`Failed to download: ${response.statusText}`)
+          throw new Error(`Failed to download: ${response.status} ${response.statusText}`)
         }
         
         const contentType = response.headers.get('content-type')
