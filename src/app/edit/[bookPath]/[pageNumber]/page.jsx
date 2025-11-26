@@ -44,8 +44,8 @@ export default function EditPage() {
     try {
       setLoading(true)
       
-      // טען נתוני ספר
-      const bookResponse = await fetch(`/api/book/${encodeURIComponent(bookPath)}`)
+      // טען נתוני ספר - משתמש באותו API כמו דף הספר
+      const bookResponse = await fetch(`/api/book-by-name?name=${encodeURIComponent(bookPath)}`)
       const bookResult = await bookResponse.json()
       
       if (bookResult.success) {
