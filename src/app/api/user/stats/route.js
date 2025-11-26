@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../auth/[...nextauth]/route'
-import { listFiles } from '@/lib/storage'
+import { listFiles, readJSON } from '@/lib/storage'
 
 export async function GET(request) {
   try {
@@ -15,6 +15,20 @@ export async function GET(request) {
     }
 
     const userId = session.user.id
+
+    // קרא את נקודות המשתמש מ-users.json
+    let userPoints = 0
+    try {
+      const usersData = await readJSON('data/users.json')
+      if (usersData) {
+        const user = usersData.find(u => u.id === userId)
+        if (user) {
+          userPoints = user.points || 0
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user points:', error)
+    }
 
     // קרא את כל קבצי הסטטוס
     const files = await listFiles('data/pages/')
@@ -72,7 +86,7 @@ export async function GET(request) {
         myPages,
         completedPages,
         inProgressPages,
-        points: (completedPages * 10) + (inProgressPages * 2)
+        points: userPoints // השתמש בנקודות האמיתיות מ-users.json
       },
       recentActivity: recentActivity.slice(0, 10) // 10 אחרונים
     })

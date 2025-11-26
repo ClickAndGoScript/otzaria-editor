@@ -8,6 +8,13 @@ let cachedData = null
 let cacheTime = null
 const CACHE_DURATION = 5 * 60 * 1000 // 5 דקות
 
+// פונקציה לניקוי cache (לשימוש פנימי)
+export function clearWeeklyProgressCache() {
+  cachedData = null
+  cacheTime = null
+  console.log('🗑️  Weekly progress cache cleared')
+}
+
 export async function GET() {
   try {
     // בדוק אם יש cache תקף

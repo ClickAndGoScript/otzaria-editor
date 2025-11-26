@@ -48,6 +48,16 @@ async function calculateUserStats(userId) {
   let points = 0
 
   try {
+    // קרא את הנקודות האמיתיות מ-users.json
+    const usersData = await readJSON('data/users.json')
+    if (usersData) {
+      const user = usersData.find(u => u.id === userId)
+      if (user) {
+        points = user.points || 0
+      }
+    }
+
+    // ספור עמודים
     const files = await listFiles('data/pages/')
     const jsonFiles = files.filter(f => f.pathname.endsWith('.json'))
 
@@ -61,19 +71,12 @@ async function calculateUserStats(userId) {
         if (page.claimedById === userId) {
           if (page.status === 'completed') {
             completedPages++
-            points += 10 // 10 נקודות לכל עמוד שהושלם
           } else if (page.status === 'in-progress') {
             inProgressPages++
-            points += 2 // 2 נקודות לכל עמוד בטיפול
           }
         }
       })
     }
-
-    // בונוס נקודות
-    if (completedPages >= 100) points += 100 // בונוס ל-100 עמודים
-    if (completedPages >= 50) points += 50   // בונוס ל-50 עמודים
-    if (completedPages >= 10) points += 20   // בונוס ל-10 עמודים
 
   } catch (error) {
     console.error('Error calculating user stats:', error)

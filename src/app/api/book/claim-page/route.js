@@ -59,14 +59,30 @@ export async function POST(request) {
             claimedAt: new Date().toISOString(),
         }
 
-        // שמור בחזרה ל-Blob Storage
+        // שמור בחזרה ל-Storage
         await saveJSON(pagesDataFile, pagesData)
+
+        // עדכן נקודות המשתמש - הוסף 5 נקודות ללקיחת עמוד
+        try {
+            const usersData = await readJSON('data/users.json')
+            if (usersData) {
+                const userIndex = usersData.findIndex(u => u.id === userId)
+                if (userIndex !== -1) {
+                    usersData[userIndex].points = (usersData[userIndex].points || 0) + 5
+                    await saveJSON('data/users.json', usersData)
+                    console.log(`💰 Added 5 points to ${userName} (total: ${usersData[userIndex].points})`)
+                }
+            }
+        } catch (error) {
+            console.error('⚠️  Error updating user points:', error)
+            // לא נכשיל את הבקשה אם עדכון הנקודות נכשל
+        }
 
         console.log(`✅ Page ${pageNumber} claimed by ${userName}`)
 
         return NextResponse.json({
             success: true,
-            message: 'העמוד נתפס בהצלחה',
+            message: 'העמוד נתפס בהצלחה (+5 נקודות)',
             page: pagesData[pageIndex],
         })
     } catch (error) {
