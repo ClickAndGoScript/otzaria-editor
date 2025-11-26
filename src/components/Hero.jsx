@@ -67,6 +67,7 @@ export default function Hero() {
           {/* כותרת עם אנימציה */}
           <motion.h1 
             className="text-5xl md:text-6xl font-bold mb-6 text-on-background"
+            style={{ fontFamily: 'FrankRuehl, serif' }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
