@@ -44,7 +44,12 @@ export async function PUT(request) {
     const allowedFields = ['name', 'role', 'points']
     allowedFields.forEach(field => {
       if (updates[field] !== undefined) {
-        users[userIndex][field] = updates[field]
+        // וודא שנקודות נשמרות כמספר
+        if (field === 'points') {
+          users[userIndex][field] = parseInt(updates[field]) || 0
+        } else {
+          users[userIndex][field] = updates[field]
+        }
       }
     })
 

@@ -61,16 +61,24 @@ export default function AdminClient({ session }) {
 
     const handleUpdateUser = async (userId, updates) => {
         try {
+            // וודא שנקודות הן מספר
+            const cleanUpdates = { ...updates }
+            if (cleanUpdates.points !== undefined) {
+                cleanUpdates.points = parseInt(cleanUpdates.points) || 0
+            }
+
             const response = await fetch('/api/admin/users/update', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, updates })
+                body: JSON.stringify({ userId, updates: cleanUpdates })
             })
 
             const result = await response.json()
             if (result.success) {
-                setUsers(users.map(u => u.id === userId ? { ...u, ...updates } : u))
+                // עדכן את המשתמש עם הנתונים שחזרו מהשרת
+                setUsers(users.map(u => u.id === userId ? result.user : u))
                 setEditingUser(null)
+                alert('המשתמש עודכן בהצלחה!')
             } else {
                 alert(result.error || 'שגיאה בעדכון משתמש')
             }
