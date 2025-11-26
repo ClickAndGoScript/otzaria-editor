@@ -28,6 +28,9 @@ export default function EditPage() {
   const [findText, setFindText] = useState('')
   const [replaceText, setReplaceText] = useState('')
   const [isOcrProcessing, setIsOcrProcessing] = useState(false)
+  const [showSplitDialog, setShowSplitDialog] = useState(false)
+  const [rightColumnName, setRightColumnName] = useState('חלק 1')
+  const [leftColumnName, setLeftColumnName] = useState('חלק 2')
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -153,18 +156,8 @@ export default function EditPage() {
 
   const toggleColumns = () => {
     if (!twoColumns) {
-      // מעבר מטור אחד לשניים - פצל את הטקסט
-      const lines = content.split('\n')
-      const midPoint = Math.ceil(lines.length / 2)
-      const rightText = lines.slice(0, midPoint).join('\n')
-      const leftText = lines.slice(midPoint).join('\n')
-      
-      setRightColumn(rightText)
-      setLeftColumn(leftText)
-      setTwoColumns(true)
-      
-      // שמור מיד
-      debouncedSave(content, leftText, rightText, true)
+      // הצג דיאלוג אישור לפני פיצול
+      setShowSplitDialog(true)
     } else {
       // מעבר משניים לאחד - איחוד הטקסט (ללא רווחים מיותרים)
       const combinedText = rightColumn + leftColumn
@@ -174,6 +167,18 @@ export default function EditPage() {
       // שמור מיד
       debouncedSave(combinedText, leftColumn, rightColumn, false)
     }
+  }
+
+  const confirmSplit = () => {
+    // מעבר מטור אחד לשניים - פצל את הטקסט
+    // אם יש כבר טקסט, הכל נכנס לחלק 1 (טור ימני)
+    setRightColumn(content)
+    setLeftColumn('')
+    setTwoColumns(true)
+    setShowSplitDialog(false)
+    
+    // שמור מיד
+    debouncedSave(content, '', content, true)
   }
 
   const handleFindReplace = (replaceAll = false) => {
@@ -676,26 +681,38 @@ export default function EditPage() {
             <div className="w-1/2 flex flex-col overflow-hidden p-4 editor-container">
                 {twoColumns ? (
                   <div className="grid grid-cols-2 gap-4 h-full">
-                    <textarea
-                      data-column="right"
-                      value={rightColumn}
-                      onChange={(e) => handleColumnChange('right', e.target.value)}
-                      onFocus={() => setActiveTextarea('right')}
-                      placeholder="טקסט הטור הימני..."
-                      style={{ fontFamily: selectedFont }}
-                      className="p-4 bg-white border-2 border-surface-variant rounded-lg resize-none focus:outline-none focus:border-primary transition-colors text-lg leading-relaxed"
-                      dir="rtl"
-                    />
-                    <textarea
-                      data-column="left"
-                      value={leftColumn}
-                      onChange={(e) => handleColumnChange('left', e.target.value)}
-                      onFocus={() => setActiveTextarea('left')}
-                      placeholder="טקסט הטור השמאלי..."
-                      style={{ fontFamily: selectedFont }}
-                      className="p-4 bg-white border-2 border-surface-variant rounded-lg resize-none focus:outline-none focus:border-primary transition-colors text-lg leading-relaxed"
-                      dir="rtl"
-                    />
+                    <div className="flex flex-col h-full">
+                      <div className="flex items-center gap-2 mb-2 px-2">
+                        <span className="material-symbols-outlined text-primary text-sm">article</span>
+                        <span className="text-sm font-bold text-on-surface">{rightColumnName}</span>
+                      </div>
+                      <textarea
+                        data-column="right"
+                        value={rightColumn}
+                        onChange={(e) => handleColumnChange('right', e.target.value)}
+                        onFocus={() => setActiveTextarea('right')}
+                        placeholder={`טקסט ${rightColumnName}...`}
+                        style={{ fontFamily: selectedFont }}
+                        className="flex-1 p-4 bg-white border-2 border-surface-variant rounded-lg resize-none focus:outline-none focus:border-primary transition-colors text-lg leading-relaxed"
+                        dir="rtl"
+                      />
+                    </div>
+                    <div className="flex flex-col h-full">
+                      <div className="flex items-center gap-2 mb-2 px-2">
+                        <span className="material-symbols-outlined text-primary text-sm">article</span>
+                        <span className="text-sm font-bold text-on-surface">{leftColumnName}</span>
+                      </div>
+                      <textarea
+                        data-column="left"
+                        value={leftColumn}
+                        onChange={(e) => handleColumnChange('left', e.target.value)}
+                        onFocus={() => setActiveTextarea('left')}
+                        placeholder={`טקסט ${leftColumnName}...`}
+                        style={{ fontFamily: selectedFont }}
+                        className="flex-1 p-4 bg-white border-2 border-surface-variant rounded-lg resize-none focus:outline-none focus:border-primary transition-colors text-lg leading-relaxed"
+                        dir="rtl"
+                      />
+                    </div>
                   </div>
                 ) : (
                   <textarea
@@ -868,6 +885,78 @@ export default function EditPage() {
               <button
                 onClick={() => setShowFindReplace(false)}
                 className="w-full px-4 py-3 border-2 border-surface-variant text-on-surface rounded-lg hover:bg-surface transition-colors"
+              >
+                ביטול
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Split Dialog */}
+      {showSplitDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="glass-strong rounded-2xl p-8 max-w-md w-full border-2 border-primary">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="material-symbols-outlined text-4xl text-primary">
+                splitscreen
+              </span>
+              <div>
+                <h3 className="text-2xl font-bold text-on-surface">פיצול עמוד</h3>
+                <p className="text-sm text-on-surface/60">חלק את העמוד לשני חלקים</p>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-2">
+                <span className="material-symbols-outlined text-yellow-600">warning</span>
+                <div className="text-sm text-yellow-800">
+                  <p className="font-bold mb-1">האם אתה בטוח?</p>
+                  <p>עמוד זה כולל שני חלקים (טורים)?</p>
+                  <p className="mt-2 text-xs">הטקסט הקיים יועבר לחלק 1</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-on-surface mb-2">
+                  שם חלק 1 (טור ימני):
+                </label>
+                <input
+                  type="text"
+                  value={rightColumnName}
+                  onChange={(e) => setRightColumnName(e.target.value)}
+                  className="w-full px-4 py-2 border-2 border-surface-variant rounded-lg focus:outline-none focus:border-primary bg-white text-on-surface"
+                  placeholder="לדוגמה: טור ראשי"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-on-surface mb-2">
+                  שם חלק 2 (טור שמאלי):
+                </label>
+                <input
+                  type="text"
+                  value={leftColumnName}
+                  onChange={(e) => setLeftColumnName(e.target.value)}
+                  className="w-full px-4 py-2 border-2 border-surface-variant rounded-lg focus:outline-none focus:border-primary bg-white text-on-surface"
+                  placeholder="לדוגמה: הערות"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={confirmSplit}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-on-primary rounded-lg hover:bg-accent transition-colors font-bold"
+              >
+                <span className="material-symbols-outlined">splitscreen</span>
+                <span>פצל עמוד</span>
+              </button>
+              <button
+                onClick={() => setShowSplitDialog(false)}
+                className="flex-1 px-4 py-3 border-2 border-surface-variant text-on-surface rounded-lg hover:bg-surface transition-colors"
               >
                 ביטול
               </button>

@@ -46,6 +46,7 @@ export default function BookPage() {
   const [error, setError] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState(null)
   const [uploadDialog, setUploadDialog] = useState(null)
+  const [viewMode, setViewMode] = useState('single') // 'single' (עמוד אחד) או 'double' (שני עמודים)
 
   useEffect(() => {
     loadBookData()
@@ -348,9 +349,41 @@ export default function BookPage() {
 
           {/* Pages Grid */}
           <div className="glass-strong rounded-2xl p-6 border border-surface-variant/30">
-            <h2 className="text-2xl font-bold text-on-surface mb-6">עמודי הספר</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-on-surface">עמודי הספר</h2>
+              
+              {/* View Mode Toggle */}
+              <div className="flex gap-2 bg-surface rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('single')}
+                  className={`p-2 rounded transition-colors ${
+                    viewMode === 'single'
+                      ? 'bg-primary text-on-primary'
+                      : 'text-on-surface/60 hover:text-on-surface hover:bg-surface-variant'
+                  }`}
+                  title="עמוד אחד"
+                >
+                  <span className="material-symbols-outlined">crop_portrait</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('double')}
+                  className={`p-2 rounded transition-colors ${
+                    viewMode === 'double'
+                      ? 'bg-primary text-on-primary'
+                      : 'text-on-surface/60 hover:text-on-surface hover:bg-surface-variant'
+                  }`}
+                  title="שני עמודים"
+                >
+                  <span className="material-symbols-outlined">auto_stories</span>
+                </button>
+              </div>
+            </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <div className={
+              viewMode === 'single'
+                ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'
+                : 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-4'
+            }>
               {pages.map((page) => (
                 <PageCard
                   key={page.number}
