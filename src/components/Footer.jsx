@@ -39,27 +39,39 @@ export default function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link href="/" className="text-on-surface/70 hover:text-primary transition-colors flex items-center gap-2 group">
-                  <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_back</span>
+                  <span className="material-symbols-outlined text-sm">link</span>
                   דף הבית
                 </Link>
               </li>
               <li>
                 <Link href="/library" className="text-on-surface/70 hover:text-primary transition-colors flex items-center gap-2 group">
-                  <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_back</span>
+                  <span className="material-symbols-outlined text-sm">link</span>
                   הספרייה
                 </Link>
               </li>
               <li>
                 <Link href="/users" className="text-on-surface/70 hover:text-primary transition-colors flex items-center gap-2 group">
-                  <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_back</span>
+                  <span className="material-symbols-outlined text-sm">link</span>
                   משתמשים
                 </Link>
               </li>
               <li>
                 <Link href="/dashboard" className="text-on-surface/70 hover:text-primary transition-colors flex items-center gap-2 group">
-                  <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_back</span>
-                  לוח בקרה
+                  <span className="material-symbols-outlined text-sm">link</span>
+                  איזור אישי
                 </Link>
+              </li>
+              <li>
+                <a href="https://mitmachim.top/topic/90100/%D7%91%D7%A7%D7%A9%D7%94-%D7%94%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98-%D7%94%D7%A9%D7%99%D7%AA%D7%95%D7%A4%D7%99-%D7%94%D7%97%D7%93%D7%A9-%D7%9E%D7%91%D7%99%D7%AA-%D7%90%D7%95%D7%A6%D7%A8%D7%99%D7%90-%D7%95%D7%96%D7%99%D7%AA-%D7%94%D7%95%D7%A1%D7%A4%D7%AA-%D7%A1%D7%A4%D7%A8%D7%99%D7%9D-%D7%97%D7%A1%D7%A8%D7%99%D7%9D" target="_blank" rel="noopener noreferrer" className="text-on-surface/70 hover:text-primary transition-colors flex items-center gap-2 group">
+                  <span className="material-symbols-outlined text-sm">open_in_new</span>
+                  מתמחים טופ
+                </a>
+              </li>
+              <li>
+                <a href="https://www.otzaria.org/" target="_blank" rel="noopener noreferrer" className="text-on-surface/70 hover:text-primary transition-colors flex items-center gap-2 group">
+                  <span className="material-symbols-outlined text-sm">open_in_new</span>
+                  אוצריא
+                </a>
               </li>
             </ul>
           </div>
