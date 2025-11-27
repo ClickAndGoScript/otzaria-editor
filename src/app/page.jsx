@@ -100,7 +100,7 @@ export default function HomePage() {
                 transition={{ type: "spring", stiffness: 300 }}
               >
                 <img 
-                  src="/otzaria-site-main/images/logo.svg" 
+                  src="/logo.png" 
                   alt="לוגו אוצריא" 
                   className="w-32 h-32 drop-shadow-2xl"
                 />

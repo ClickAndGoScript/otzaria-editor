@@ -26,12 +26,11 @@ export default withAuth(
 export const config = {
   matcher: [
     // דפים שדורשים התחברות
-    '/dashboard/:path*',
-    '/admin/:path*',
-    '/library/:path*',
-    '/book/:path*',
-    '/upload/:path*',
-    '/edit/:path*',
-    '/users/:path*'
+    '/library/dashboard/:path*',
+    '/library/admin/:path*',
+    '/library/book/:path*',
+    '/library/upload/:path*',
+    '/library/edit/:path*',
+    '/library/users/:path*'
   ]
 }

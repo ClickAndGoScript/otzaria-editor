@@ -20,7 +20,7 @@ export default function OtzariaSoftwareHeader() {
     <header className="sticky top-0 z-50 w-full glass-strong">
       <div className="container mx-auto flex h-16 items-center justify-between px-8">
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity mr-4">
-          <img src="/otzaria-site-main/images/logo.svg" alt="לוגו אוצריא" className="w-12 h-12" />
+          <img src="/logo.png" alt="לוגו אוצריא" className="w-12 h-12" />
           <span className="text-xl font-bold text-black" style={{ fontFamily: 'FrankRuehl, serif' }}>אוצריא</span>
         </Link>
         
