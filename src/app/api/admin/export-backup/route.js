@@ -8,24 +8,44 @@ export const runtime = 'nodejs'
 // רק משתמש בשם "admin" יכול לגשת
 const SUPER_ADMIN_USERNAME = 'admin'
 
-export async function GET(request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     
+    console.log('📦 Backup request from:', session?.user?.name)
+    
     // בדוק שזה המשתמש "admin"
-    if (!session || session.user.name !== SUPER_ADMIN_USERNAME) {
+    if (!session) {
+      console.error('❌ No session found')
       return NextResponse.json(
-        { success: false, error: 'Unauthorized - Only user "admin" can access backups' },
+        { success: false, error: 'לא מחובר - נא להתחבר תחילה' },
         { status: 401 }
       )
     }
+    
+    if (session.user.name !== SUPER_ADMIN_USERNAME) {
+      console.error(`❌ Unauthorized user: ${session.user.name}`)
+      return NextResponse.json(
+        { success: false, error: `רק המשתמש "${SUPER_ADMIN_USERNAME}" יכול להוריד גיבויים` },
+        { status: 403 }
+      )
+    }
 
-    console.log('📦 Creating full backup export...')
+    console.log('✅ Authorization passed, creating backup...')
+    
+    if (!process.env.DATABASE_URL) {
+      console.error('❌ DATABASE_URL not configured')
+      return NextResponse.json(
+        { success: false, error: 'שגיאת תצורה - DATABASE_URL לא מוגדר' },
+        { status: 500 }
+      )
+    }
     
     const client = new MongoClient(process.env.DATABASE_URL)
     await client.connect()
-    const db = client.db('otzaria')
+    console.log('✅ Connected to MongoDB')
     
+    const db = client.db('otzaria')
     const filesCollection = db.collection('files')
     
     // ייצוא כל הנתונים החשובים
@@ -72,10 +92,13 @@ export async function GET(request) {
     
     // סטטיסטיקות
     const stats = {
-      totalUsers: backup.data.users.length,
-      totalBooks: backup.data.books.length,
-      totalPages: Object.values(backup.data.pages).reduce((sum, pages) => sum + pages.length, 0),
-      totalUploads: backup.data.uploads.length,
+      totalUsers: backup.data.users?.length || 0,
+      totalBooks: backup.data.books?.length || 0,
+      totalPages: Object.values(backup.data.pages).reduce((sum, pages) => {
+        if (!pages || !Array.isArray(pages)) return sum
+        return sum + pages.length
+      }, 0),
+      totalUploads: backup.data.uploads?.length || 0,
       exportSize: JSON.stringify(backup).length
     }
     

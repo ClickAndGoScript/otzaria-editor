@@ -5,18 +5,37 @@ export const runtime = 'nodejs'
 
 export async function GET(request, { params }) {
   try {
-    // קבל את הנתיב המלא
-    const pathSegments = params.path
-    const filePath = pathSegments.join('/')
-    
-    console.log('📥 Download request:', filePath)
-    console.log('   Path segments:', pathSegments)
+    console.log('📥 Download request received')
     console.log('   Full URL:', request.url)
+    
+    // Next.js 15: params is a Promise, must await it
+    const resolvedParams = await params
+    
+    console.log('   Resolved params:', resolvedParams)
+    
+    // וודא ש-params.path קיים ומערך
+    if (!resolvedParams || !resolvedParams.path) {
+      console.error('❌ No path in params')
+      return NextResponse.json(
+        { success: false, error: 'נתיב חסר' },
+        { status: 400 }
+      )
+    }
+    
+    // קבל את הנתיב המלא ופענח אותו (decode URL encoding)
+    const pathSegments = Array.isArray(resolvedParams.path) 
+      ? resolvedParams.path.map(segment => decodeURIComponent(segment))
+      : [decodeURIComponent(resolvedParams.path)]
+    
+    const filePath = `data/uploads/${pathSegments.join('/')}`
+    
+    console.log('   Path segments (decoded):', pathSegments)
+    console.log('   File path:', filePath)
 
     // קרא את הקובץ מ-MongoDB
     const content = await readText(filePath)
     
-    if (!content) {
+    if (!content || content === null) {
       console.error('❌ File not found in MongoDB:', filePath)
       
       // נסה למצוא קבצים דומים
@@ -27,23 +46,37 @@ export async function GET(request, { params }) {
         const db = client.db('otzaria')
         const collection = db.collection('files')
         
+        // חפש בתיקיית uploads
         const similarFiles = await collection.find({
-          path: { $regex: pathSegments[pathSegments.length - 1] }
-        }).limit(5).toArray()
+          path: { $regex: '^data/uploads/' }
+        }).limit(10).toArray()
         
-        console.log('📋 Similar files found:', similarFiles.map(f => f.path))
+        console.log('📋 Files in uploads folder:', similarFiles.map(f => f.path))
+        
+        // גם חפש את הקובץ הספציפי
+        const exactFile = await collection.findOne({ path: filePath })
+        if (exactFile) {
+          console.log('📄 File exists but data structure:', Object.keys(exactFile))
+        }
+        
         await client.close()
       } catch (err) {
         console.error('Error searching for similar files:', err)
       }
       
       return NextResponse.json(
-        { success: false, error: 'קובץ לא נמצא', path: filePath },
+        { 
+          success: false, 
+          error: 'קובץ לא נמצא במערכת', 
+          path: filePath,
+          hint: 'ייתכן שהקובץ לא הועלה כראוי או נמחק'
+        },
         { status: 404 }
       )
     }
 
     console.log('✅ File found, sending content')
+    console.log('   Content length:', content?.length || 0)
 
     // חלץ את שם הקובץ
     const fileName = pathSegments[pathSegments.length - 1]

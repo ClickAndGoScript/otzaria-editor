@@ -856,17 +856,37 @@ export default function AdminClient({ session }) {
 
                                                         <div className="flex gap-3 flex-wrap">
                                                             {upload.fileName ? (
-                                                                <a
-                                                                    href={`/api/download/data/uploads/${upload.fileName}`}
-                                                                    download={upload.originalFileName}
-                                                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                                                >
-                                                                    <span className="material-symbols-outlined">download</span>
-                                                                    <span>הורד קובץ</span>
-                                                                </a>
+                                                                <>
+                                                                    <a
+                                                                        href={`/api/download/${upload.fileName}`}
+                                                                        download={upload.originalFileName}
+                                                                        onClick={(e) => {
+                                                                            // בדוק אם הקובץ קיים
+                                                                            fetch(`/api/download/${upload.fileName}`)
+                                                                                .then(res => {
+                                                                                    if (!res.ok) {
+                                                                                        e.preventDefault()
+                                                                                        alert('הקובץ לא נמצא במערכת. ייתכן שהוא הועלה לפני המעבר ל-MongoDB.')
+                                                                                    }
+                                                                                })
+                                                                                .catch(() => {
+                                                                                    e.preventDefault()
+                                                                                    alert('שגיאה בגישה לקובץ')
+                                                                                })
+                                                                        }}
+                                                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                                                    >
+                                                                        <span className="material-symbols-outlined">download</span>
+                                                                        <span>הורד קובץ</span>
+                                                                    </a>
+                                                                    <span className="text-xs text-on-surface/60">
+                                                                        {upload.fileName}
+                                                                    </span>
+                                                                </>
                                                             ) : (
-                                                                <span className="text-sm text-red-600 px-4 py-2">
-                                                                    ⚠️ קובץ לא נמצא
+                                                                <span className="text-sm text-red-600 px-4 py-2 flex items-center gap-2">
+                                                                    <span className="material-symbols-outlined">error</span>
+                                                                    <span>שם קובץ חסר במטא-דאטה</span>
                                                                 </span>
                                                             )}
                                                             {upload.status === 'pending' && (
