@@ -3,8 +3,8 @@ import SessionProvider from '@/components/SessionProvider'
 import ErrorBoundary from '@/components/ErrorBoundary'
 
 export const metadata = {
-  title: 'ספריית אוצריא | פלטפורמה משותפת לעריכת ספרי קודש',
-  description: 'פלטפורמה משותפת לעריכה ושיתוף של ספרי קודש. ערכו, שתפו והוסיפו ספרים חדשים למאגר הגדול ביותר של טקסטים תורניים.',
+  title: 'אוצריא | מאגר תורני פתוח',
+  description: 'מאגר תורני רחב עם ממשק מודרני ומהיר. תוכנה חינמית לשימוש במחשב אישי או במכשיר הנייד, ללימוד תורה בקלות ובנוחות בכל מקום.',
 }
 
 export default function RootLayout({ children }) {
