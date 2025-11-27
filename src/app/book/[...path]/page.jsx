@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { getAvatarColor, getInitial } from '@/lib/avatar-colors'
+import Header from '@/components/Header'
 
 const pageStatusConfig = {
   available: {
@@ -51,6 +52,13 @@ export default function BookPage() {
   useEffect(() => {
     loadBookData()
   }, [bookPath])
+
+  // Update page title
+  useEffect(() => {
+    if (bookData?.name) {
+      document.title = `ספריית אוצריא | ${bookData.name}`
+    }
+  }, [bookData])
 
   const loadBookData = async () => {
     try {
@@ -324,44 +332,24 @@ export default function BookPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="glass-strong border-b border-surface-variant sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <Header />
+
+      {/* Book Title Section */}
+      <div className="glass-strong border-b border-surface-variant">
+        <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-4">
-            <Link href="/library" className="flex items-center gap-2 text-on-surface hover:text-primary transition-colors">
-              <span className="material-symbols-outlined">arrow_forward</span>
-              <span>חזרה לספרייה</span>
-            </Link>
-            <div className="w-px h-8 bg-surface-variant"></div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
-                <span className="material-symbols-outlined text-xl text-red-600">
-                  picture_as_pdf
-                </span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-on-surface">{bookData.name}</h1>
-                <p className="text-sm text-on-surface/60">{stats.total} עמודים</p>
-              </div>
+            <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center">
+              <span className="material-symbols-outlined text-2xl text-red-600">
+                picture_as_pdf
+              </span>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-on-surface">{bookData.name}</h1>
+              <p className="text-sm text-on-surface/60">{stats.total} עמודים</p>
             </div>
           </div>
-
-          {session && (
-            <Link 
-              href="/dashboard" 
-              className="flex items-center justify-center hover:opacity-80 transition-opacity"
-              title={session.user.name}
-            >
-              <div 
-                className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-base shadow-md hover:shadow-lg transition-shadow"
-                style={{ backgroundColor: getAvatarColor(session.user.name) }}
-              >
-                {getInitial(session.user.name)}
-              </div>
-            </Link>
-          )}
         </div>
-      </header>
+      </div>
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">

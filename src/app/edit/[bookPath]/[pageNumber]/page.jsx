@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { getAvatarColor, getInitial } from '@/lib/avatar-colors'
 
 export default function EditPage() {
@@ -41,6 +42,13 @@ export default function EditPage() {
       loadPageData()
     }
   }, [status, bookPath, pageNumber])
+
+  // Update page title
+  useEffect(() => {
+    if (bookData?.name) {
+      document.title = `ספריית אוצריא | עריכה: ${bookData.name} - עמוד ${pageNumber}`
+    }
+  }, [bookData, pageNumber])
 
   const loadPageData = async () => {
     try {
@@ -466,6 +474,13 @@ export default function EditPage() {
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
+              <Link href="/library" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <img src="/logo.png" alt="לוגו אוצריא" className="w-10 h-10" />
+                <span className="text-lg font-bold text-black" style={{ fontFamily: 'FrankRuehl, serif' }}>ספריית אוצריא</span>
+              </Link>
+
+              <div className="w-px h-8 bg-surface-variant"></div>
+
               <Link 
                 href={`/book/${encodeURIComponent(bookPath)}`}
                 className="flex items-center gap-2 text-on-surface hover:text-primary transition-colors"
@@ -482,7 +497,7 @@ export default function EditPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-green-600">
                 <span className="material-symbols-outlined text-base">check_circle</span>
                 <span>נשמר אוטומטית</span>
