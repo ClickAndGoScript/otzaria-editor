@@ -114,47 +114,124 @@ export default function InstallationTutorialPage() {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="flex gap-4 p-6 bg-surface-variant rounded-xl">
-                      <div className="w-12 h-12 bg-primary text-on-primary rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">
-                        1
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-xl font-bold text-primary-dark mb-2">קובץ EXE (מומלץ)</h4>
-                        <p className="mb-2">גרסה פשוטה להתקנה. הורידו את הקובץ:</p>
-                        <ul className="list-disc mr-6 space-y-1">
-                          <li><code className="bg-surface px-2 py-1 rounded">otzaria-0.1.7-windows.exe</code></li>
-                        </ul>
-                        <p className="mt-2">או את גרסת ה-MSIX:</p>
-                        <ul className="list-disc mr-6 space-y-1">
-                          <li><code className="bg-surface px-2 py-1 rounded">otzaria-0.1.8-dev.4-windows.msix</code></li>
-                        </ul>
+                    {/* גירסאות יציבות */}
+                    <div className="p-6 bg-green-50 border-2 border-green-400 rounded-xl">
+                      <h4 className="text-2xl font-bold text-green-800 mb-4 flex items-center gap-2">
+                        <span className="material-symbols-outlined">verified</span>
+                        גירסאות יציבות (מומלץ)
+                      </h4>
+                      <p className="text-green-900 mb-4">גירסאות שנבדקו ויציבות למשתמשים רגילים</p>
+                      
+                      <div className="space-y-3">
+                        <a
+                          href="https://github.com/Y-PLONI/otzaria/releases/latest/download/otzaria-windows.exe"
+                          className="flex items-center justify-between p-4 bg-white rounded-lg hover:shadow-lg transition-shadow group"
+                          download
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-3xl text-blue-600">desktop_windows</span>
+                            <div>
+                              <div className="font-bold text-lg">Windows (EXE)</div>
+                              <div className="text-sm text-gray-600">מומלץ למשתמשי Windows</div>
+                            </div>
+                          </div>
+                          <span className="material-symbols-outlined text-primary group-hover:translate-x-[-4px] transition-transform">download</span>
+                        </a>
+
+                        <a
+                          href="https://github.com/Y-PLONI/otzaria/releases/latest/download/otzaria-macos.zip"
+                          className="flex items-center justify-between p-4 bg-white rounded-lg hover:shadow-lg transition-shadow group"
+                          download
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-3xl text-gray-700">laptop_mac</span>
+                            <div>
+                              <div className="font-bold text-lg">macOS (ZIP)</div>
+                              <div className="text-sm text-gray-600">למחשבי Mac</div>
+                            </div>
+                          </div>
+                          <span className="material-symbols-outlined text-primary group-hover:translate-x-[-4px] transition-transform">download</span>
+                        </a>
+
+                        <a
+                          href="https://github.com/Y-PLONI/otzaria/releases/latest"
+                          className="flex items-center justify-between p-4 bg-white rounded-lg hover:shadow-lg transition-shadow group"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-3xl text-orange-600">computer</span>
+                            <div>
+                              <div className="font-bold text-lg">Linux (DEB)</div>
+                              <div className="text-sm text-gray-600">Ubuntu, Debian ומשפחתם</div>
+                            </div>
+                          </div>
+                          <span className="material-symbols-outlined text-primary group-hover:translate-x-[-4px] transition-transform">open_in_new</span>
+                        </a>
+
+                        <a
+                          href="https://github.com/Y-PLONI/otzaria/releases/latest"
+                          className="flex items-center justify-between p-4 bg-white rounded-lg hover:shadow-lg transition-shadow group"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-3xl text-red-600">computer</span>
+                            <div>
+                              <div className="font-bold text-lg">Linux (RPM)</div>
+                              <div className="text-sm text-gray-600">Fedora, RedHat ומשפחתם</div>
+                            </div>
+                          </div>
+                          <span className="material-symbols-outlined text-primary group-hover:translate-x-[-4px] transition-transform">open_in_new</span>
+                        </a>
+
+                        <a
+                          href="https://github.com/Y-PLONI/otzaria/releases/latest/download/app-release.apk"
+                          className="flex items-center justify-between p-4 bg-white rounded-lg hover:shadow-lg transition-shadow group"
+                          download
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-3xl text-green-600">android</span>
+                            <div>
+                              <div className="font-bold text-lg">Android (APK)</div>
+                              <div className="text-sm text-gray-600">למכשירי אנדרואיד</div>
+                            </div>
+                          </div>
+                          <span className="material-symbols-outlined text-primary group-hover:translate-x-[-4px] transition-transform">download</span>
+                        </a>
                       </div>
                     </div>
 
-                    <div className="flex gap-4 p-6 bg-surface-variant rounded-xl">
-                      <div className="w-12 h-12 bg-primary text-on-primary rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">
-                        2
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-xl font-bold text-primary-dark mb-2">גרסה ללא ספרייה</h4>
-                        <p className="mb-2">אם יש לכם כבר ספרייה מותקנת, תוכלו להוריד את התוכנה בלבד:</p>
-                        <ul className="list-disc mr-6">
-                          <li><code className="bg-surface px-2 py-1 rounded">otzaria-0.1.7-windows-no-library.zip</code></li>
-                        </ul>
-                      </div>
+                    {/* גירסאות מפתחים */}
+                    <div className="p-6 bg-purple-50 border-2 border-purple-400 rounded-xl">
+                      <h4 className="text-2xl font-bold text-purple-800 mb-4 flex items-center gap-2">
+                        <span className="material-symbols-outlined">code</span>
+                        גירסאות מפתחים (Dev)
+                      </h4>
+                      <p className="text-purple-900 mb-4">גירסאות עם תכונות חדשות שעדיין בבדיקה</p>
+                      
+                      <a
+                        href="https://github.com/Y-PLONI/otzaria/releases?q=prerelease%3Atrue"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-bold"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <span className="material-symbols-outlined">open_in_new</span>
+                        <span>צפייה בגירסאות מפתחים</span>
+                      </a>
                     </div>
 
-                    <div className="flex gap-4 p-6 bg-surface-variant rounded-xl">
-                      <div className="w-12 h-12 bg-primary text-on-primary rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">
-                        3
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-xl font-bold text-primary-dark mb-2">ספרייה בלבד</h4>
-                        <p className="mb-2">להורדת הספרייה בנפרד:</p>
-                        <ul className="list-disc mr-6">
-                          <li><code className="bg-surface px-2 py-1 rounded">otzaria-0.1.7-library-only</code></li>
-                        </ul>
-                      </div>
+                    {/* כל הגירסאות */}
+                    <div className="p-4 bg-gray-50 border border-gray-300 rounded-xl">
+                      <a
+                        href="https://github.com/Y-PLONI/otzaria/releases"
+                        className="flex items-center justify-between hover:text-primary transition-colors"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <span className="font-bold">צפייה בכל הגירסאות ב-GitHub</span>
+                        <span className="material-symbols-outlined">arrow_outward</span>
+                      </a>
                     </div>
                   </div>
 

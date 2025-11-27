@@ -4,13 +4,28 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import OtzariaSoftwareHeader from '@/components/OtzariaSoftwareHeader'
 import OtzariaSoftwareFooter from '@/components/OtzariaSoftwareFooter'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function HomePage() {
   const [windowsModalOpen, setWindowsModalOpen] = useState(false)
   const [linuxModalOpen, setLinuxModalOpen] = useState(false)
   const [androidModalOpen, setAndroidModalOpen] = useState(false)
   const [macModalOpen, setMacModalOpen] = useState(false)
+  const [stableDownloads, setStableDownloads] = useState(null)
+  const [devDownloads, setDevDownloads] = useState(null)
+
+  // Fetch download links on mount
+  useEffect(() => {
+    fetch('/api/github-releases?type=stable')
+      .then(res => res.json())
+      .then(data => setStableDownloads(data))
+      .catch(err => console.error('Failed to fetch stable releases:', err))
+    
+    fetch('/api/github-releases?type=dev')
+      .then(res => res.json())
+      .then(data => setDevDownloads(data))
+      .catch(err => console.error('Failed to fetch dev releases:', err))
+  }, [])
 
   const features = [
     {
@@ -277,28 +292,20 @@ export default function HomePage() {
         isOpen={windowsModalOpen}
         onClose={() => setWindowsModalOpen(false)}
         platform="Windows"
-        stableLinks={{
-          msix: '#',
-          exe: '#',
-          portable: '#'
-        }}
-        devLinks={{
-          msix: 'https://github.com/Y-PLONI/otzaria/releases/latest/download/otzaria.msix',
-          exe: 'https://github.com/Y-PLONI/otzaria/releases/latest/download/otzaria-windows.exe',
-          portable: 'https://github.com/Y-PLONI/otzaria/releases/latest/download/otzaria-windows.zip'
-        }}
+        stableLinks={stableDownloads?.windows || {}}
+        devLinks={devDownloads?.windows || {}}
+        stableVersion={stableDownloads?.version}
+        devVersion={devDownloads?.version}
       />
 
       <DownloadModal
         isOpen={linuxModalOpen}
         onClose={() => setLinuxModalOpen(false)}
         platform="Linux"
-        stableLinks={{
-          deb: 'https://github.com/Sivan22/otzaria/releases'
-        }}
-        devLinks={{
-          deb: 'https://github.com/Y-PLONI/otzaria/releases/latest/download/otzaria-linux.deb'
-        }}
+        stableLinks={stableDownloads?.linux || {}}
+        devLinks={devDownloads?.linux || {}}
+        stableVersion={stableDownloads?.version}
+        devVersion={devDownloads?.version}
       />
 
       <DownloadModal
@@ -306,23 +313,25 @@ export default function HomePage() {
         onClose={() => setAndroidModalOpen(false)}
         platform="Android"
         stableLinks={{
-          playStore: 'https://play.google.com/store/apps/details?id=com.mendelg.otzaria'
+          playStore: 'https://play.google.com/store/apps/details?id=com.mendelg.otzaria',
+          apk: stableDownloads?.android?.apk
         }}
         devLinks={{
-          apk: 'https://github.com/Y-PLONI/otzaria/releases/latest/download/app-release.apk'
+          playStore: 'https://play.google.com/store/apps/details?id=com.mendelg.otzaria',
+          apk: devDownloads?.android?.apk
         }}
+        stableVersion={stableDownloads?.version}
+        devVersion={devDownloads?.version}
       />
 
       <DownloadModal
         isOpen={macModalOpen}
         onClose={() => setMacModalOpen(false)}
         platform="macOS"
-        stableLinks={{
-          zip: 'https://github.com/Sivan22/otzaria/releases'
-        }}
-        devLinks={{
-          zip: 'https://github.com/Y-PLONI/otzaria/releases/latest/download/otzaria-macos.zip'
-        }}
+        stableLinks={stableDownloads?.macos || {}}
+        devLinks={devDownloads?.macos || {}}
+        stableVersion={stableDownloads?.version}
+        devVersion={devDownloads?.version}
       />
 
       <OtzariaSoftwareFooter />
@@ -330,7 +339,7 @@ export default function HomePage() {
   )
 }
 
-function DownloadModal({ isOpen, onClose, platform, stableLinks, devLinks }) {
+function DownloadModal({ isOpen, onClose, platform, stableLinks, devLinks, stableVersion, devVersion }) {
   if (!isOpen) return null
 
   return (
@@ -362,7 +371,10 @@ function DownloadModal({ isOpen, onClose, platform, stableLinks, devLinks }) {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="material-symbols-outlined text-primary">verified</span>
-              <h3 className="text-xl font-bold text-on-surface">גירסה יציבה (Stable)</h3>
+              <h3 className="text-xl font-bold text-on-surface">
+                גירסה יציבה (Stable)
+                {stableVersion && <span className="text-sm font-normal text-on-surface/60 mr-2">{stableVersion}</span>}
+              </h3>
               <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">מומלץ</span>
             </div>
             <p className="text-sm text-on-surface/70 mb-4">גירסה יציבה ומומלצת לשימוש יומיומי</p>
@@ -375,7 +387,10 @@ function DownloadModal({ isOpen, onClose, platform, stableLinks, devLinks }) {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="material-symbols-outlined text-accent">code</span>
-              <h3 className="text-xl font-bold text-on-surface">גירסת מפתחים (Dev) - v0.9.66+97</h3>
+              <h3 className="text-xl font-bold text-on-surface">
+                גירסת מפתחים (Dev)
+                {devVersion && <span className="text-sm font-normal text-on-surface/60 mr-2">{devVersion}</span>}
+              </h3>
               <span className="px-3 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full">ניסיוני</span>
             </div>
             <p className="text-sm text-on-surface/70 mb-4">גירסה עם תכונות חדשות - עשויה להכיל באגים</p>
@@ -399,19 +414,20 @@ function DownloadModal({ isOpen, onClose, platform, stableLinks, devLinks }) {
 function renderDownloadOptions(platform, links) {
   const options = {
     Windows: [
-      { key: 'msix', icon: 'package_2', title: 'MSIX Package', desc: 'התקנה מהירה דרך Windows Store' },
-      { key: 'exe', icon: 'install_desktop', title: 'EXE Installer', desc: 'קובץ התקנה קלאסי' },
-      { key: 'portable', icon: 'folder_zip', title: 'Portable (ZIP)', desc: 'גירסה ניידת ללא התקנה' }
+      { key: 'msix', icon: 'package_2', title: 'MSIX Package', desc: 'התקנה מהירה דרך Windows Store', isDirectDownload: true },
+      { key: 'exe', icon: 'install_desktop', title: 'EXE Installer', desc: 'קובץ התקנה קלאסי', isDirectDownload: true },
+      { key: 'portable', icon: 'folder_zip', title: 'Portable (ZIP)', desc: 'גירסה ניידת ללא התקנה', isDirectDownload: true }
     ],
     Linux: [
-      { key: 'deb', icon: 'package_2', title: 'DEB Package', desc: 'עבור Ubuntu, Debian ונגזרותיהם' }
+      { key: 'deb', icon: 'package_2', title: 'DEB Package', desc: 'עבור Ubuntu, Debian ונגזרותיהם', isDirectDownload: true },
+      { key: 'rpm', icon: 'package_2', title: 'RPM Package', desc: 'עבור Fedora, RedHat ונגזרותיהם', isDirectDownload: true }
     ],
     Android: [
-      { key: 'playStore', icon: 'shop', title: 'Google Play Store', desc: 'התקנה אוטומטית ועדכונים' },
-      { key: 'apk', icon: 'android', title: 'APK File', desc: 'התקנה ידנית - דורש הרשאות' }
+      { key: 'playStore', icon: 'shop', title: 'Google Play Store', desc: 'התקנה אוטומטית ועדכונים', isDirectDownload: false },
+      { key: 'apk', icon: 'android', title: 'APK File', desc: 'התקנה ידנית - דורש הרשאות', isDirectDownload: true }
     ],
     macOS: [
-      { key: 'zip', icon: 'folder_zip', title: 'macOS Package (ZIP)', desc: 'Intel & Apple Silicon' }
+      { key: 'zip', icon: 'folder_zip', title: 'macOS Package (ZIP)', desc: 'Intel & Apple Silicon', isDirectDownload: true }
     ]
   }
 
@@ -419,12 +435,14 @@ function renderDownloadOptions(platform, links) {
     const link = links[option.key]
     if (!link) return null
 
+    // בדוק אם זה קישור לדף GitHub releases או לחנות אפליקציות
+    const isPageLink = link.includes('/releases?') || link.includes('play.google.com') || link.includes('apps.apple.com')
+
     return (
       <a
         key={option.key}
         href={link}
-        target="_blank"
-        rel="noopener noreferrer"
+        {...(isPageLink ? { target: '_blank', rel: 'noopener noreferrer' } : { download: true })}
         className="flex items-center gap-3 p-4 bg-surface-variant hover:bg-surface rounded-xl transition-all hover:scale-[1.02] border-2 border-transparent hover:border-primary"
       >
         <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -434,7 +452,7 @@ function renderDownloadOptions(platform, links) {
           <h4 className="font-bold text-on-surface">{option.title}</h4>
           <p className="text-sm text-on-surface/70">{option.desc}</p>
         </div>
-        <span className="material-symbols-outlined text-primary">download</span>
+        <span className="material-symbols-outlined text-primary">{isPageLink ? 'open_in_new' : 'download'}</span>
       </a>
     )
   })
