@@ -36,9 +36,11 @@ export default function AdminClient({ session }) {
         }
     }, [activeTab, pagesFilter])
 
-    const loadData = async () => {
+    const loadData = async (retryCount = 0) => {
         try {
             setLoading(true)
+            console.log('📊 Loading admin data...')
+            
             const [usersRes, booksRes, uploadsRes] = await Promise.all([
                 fetch('/api/users/list'),
                 fetch('/api/library/list'),
@@ -49,11 +51,36 @@ export default function AdminClient({ session }) {
             const booksData = await booksRes.json()
             const uploadsData = await uploadsRes.json()
 
+            console.log('📚 Books response:', booksData)
+            console.log('👥 Users response:', usersData)
+            console.log('📤 Uploads response:', uploadsData)
+
             if (usersData.success) setUsers(usersData.users)
-            if (booksData.success) setBooks(booksData.books)
+            if (booksData.success) {
+                console.log(`✅ Setting ${booksData.books.length} books`)
+                setBooks(booksData.books)
+                
+                // אם אין ספרים ועדיין לא ניסינו retry, נסה שוב
+                if (booksData.books.length === 0 && retryCount < 2) {
+                    console.log(`🔄 No books found, retrying (${retryCount + 1}/2)...`)
+                    setLoading(false)
+                    setTimeout(() => loadData(retryCount + 1), 1500)
+                    return
+                }
+            } else {
+                console.error('❌ Books API failed:', booksData.error)
+            }
             if (uploadsData.success) setUploads(uploadsData.uploads)
         } catch (error) {
-            console.error('Error loading data:', error)
+            console.error('❌ Error loading data:', error)
+            
+            // אם יש שגיאה ועדיין לא ניסינו retry, נסה שוב
+            if (retryCount < 2) {
+                console.log(`🔄 Error occurred, retrying (${retryCount + 1}/2)...`)
+                setLoading(false)
+                setTimeout(() => loadData(retryCount + 1), 1500)
+                return
+            }
         } finally {
             setLoading(false)
         }
@@ -658,43 +685,61 @@ export default function AdminClient({ session }) {
                                         <span>הוסף ספר</span>
                                     </button>
                                 </div>
-                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {books.map(book => (
-                                        <div key={book.path} className="glass p-4 rounded-lg">
-                                            <div className="flex items-start gap-3">
-                                                {book.thumbnail && (
-                                                    <Image
-                                                        src={book.thumbnail}
-                                                        alt={book.name}
-                                                        width={60}
-                                                        height={80}
-                                                        className="rounded object-cover"
-                                                    />
-                                                )}
-                                                <div className="flex-1 min-w-0">
-                                                    <h3 className="font-bold text-on-surface mb-1 truncate">{book.name}</h3>
-                                                    <p className="text-sm text-on-surface/60 mb-2">
-                                                        {book.completedPages || 0} / {book.totalPages || 0} עמודים
-                                                    </p>
-                                                    <div className="flex gap-2">
-                                                        <Link
-                                                            href={`/book/${book.path}`}
-                                                            className="text-sm text-primary hover:text-accent"
-                                                        >
-                                                            צפה
-                                                        </Link>
-                                                        <button
-                                                            onClick={() => handleDeleteBook(book.path)}
-                                                            className="text-sm text-red-600 hover:text-red-800"
-                                                        >
-                                                            מחק
-                                                        </button>
+                                {books.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <span className="material-symbols-outlined text-6xl text-on-surface/30 mb-4">
+                                            menu_book
+                                        </span>
+                                        <p className="text-on-surface/60">אין ספרים במערכת</p>
+                                        <button
+                                            onClick={() => {
+                                                console.log('🔄 Reloading books...')
+                                                loadData()
+                                            }}
+                                            className="mt-4 px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-accent transition-colors"
+                                        >
+                                            רענן
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {books.map(book => (
+                                            <div key={book.path} className="glass p-4 rounded-lg">
+                                                <div className="flex items-start gap-3">
+                                                    {book.thumbnail && (
+                                                        <Image
+                                                            src={book.thumbnail}
+                                                            alt={book.name}
+                                                            width={60}
+                                                            height={80}
+                                                            className="rounded object-cover"
+                                                        />
+                                                    )}
+                                                    <div className="flex-1 min-w-0">
+                                                        <h3 className="font-bold text-on-surface mb-1 truncate">{book.name}</h3>
+                                                        <p className="text-sm text-on-surface/60 mb-2">
+                                                            {book.completedPages || 0} / {book.totalPages || 0} עמודים
+                                                        </p>
+                                                        <div className="flex gap-2">
+                                                            <Link
+                                                                href={`/book/${book.path}`}
+                                                                className="text-sm text-primary hover:text-accent"
+                                                            >
+                                                                צפה
+                                                            </Link>
+                                                            <button
+                                                                onClick={() => handleDeleteBook(book.path)}
+                                                                className="text-sm text-red-600 hover:text-red-800"
+                                                            >
+                                                                מחק
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
 

@@ -1,30 +1,41 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
-
-const PAGES_PATH = path.join(process.cwd(), 'data', 'pages')
+import { listFiles, readJSON } from '@/lib/storage'
 
 export async function GET() {
   try {
     const books = []
     
-    // בדוק אם התיקייה קיימת
-    if (!fs.existsSync(PAGES_PATH)) {
-      return NextResponse.json({ success: true, books: [] })
-    }
+    console.log('📚 Loading books list...')
     
-    // קרא את כל קבצי ה-JSON
-    const files = fs.readdirSync(PAGES_PATH).filter(f => f.endsWith('.json'))
+    // קרא את כל קבצי העמודים מ-MongoDB
+    const files = await listFiles('data/pages/')
+    console.log(`📦 Found ${files.length} files`)
     
-    for (const file of files) {
+    const jsonFiles = files.filter(f => f.pathname.endsWith('.json'))
+    console.log(`📄 Found ${jsonFiles.length} JSON files`)
+    
+    for (const file of jsonFiles) {
       try {
-        const filePath = path.join(PAGES_PATH, file)
-        const content = fs.readFileSync(filePath, 'utf-8')
-        const pages = JSON.parse(content)
-        const bookName = file.replace('.json', '')
+        const bookName = file.pathname.split('/').pop().replace('.json', '')
+        console.log(`📖 Processing book: ${bookName}`)
+        
+        // קרא ישירות מ-MongoDB
+        const pages = await readJSON(file.pathname)
+        
+        if (!pages) {
+          console.warn(`⚠️  No data for ${bookName}`)
+          continue
+        }
+        
+        if (!Array.isArray(pages)) {
+          console.warn(`⚠️  Data is not array for ${bookName}, type: ${typeof pages}`)
+          continue
+        }
         
         const totalPages = pages.length
         const completedPages = pages.filter(p => p.status === 'completed').length
+        
+        console.log(`✅ Book ${bookName}: ${totalPages} pages, ${completedPages} completed`)
         
         books.push({
           path: bookName,
@@ -34,13 +45,14 @@ export async function GET() {
           completedPages
         })
       } catch (error) {
-        console.error(`Error loading book ${file}:`, error)
+        console.error(`❌ Error loading book ${file.pathname}:`, error)
       }
     }
 
+    console.log(`📚 Returning ${books.length} books`)
     return NextResponse.json({ success: true, books })
   } catch (error) {
-    console.error('Error loading books list:', error)
+    console.error('❌ Error loading books list:', error)
     return NextResponse.json(
       { success: false, error: 'שגיאה בטעינת רשימת ספרים' },
       { status: 500 }

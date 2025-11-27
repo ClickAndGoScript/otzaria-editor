@@ -62,10 +62,12 @@ async function calculateUserStats(userId) {
     const jsonFiles = files.filter(f => f.pathname.endsWith('.json'))
 
     for (const file of jsonFiles) {
-      const response = await fetch(file.url)
-      if (!response.ok) continue
+      // קרא ישירות מ-MongoDB במקום fetch
+      const pages = await readJSON(file.pathname)
       
-      const pages = await response.json()
+      if (!pages || !Array.isArray(pages)) {
+        continue
+      }
 
       pages.forEach(page => {
         if (page.claimedById === userId) {

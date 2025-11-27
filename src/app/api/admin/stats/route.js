@@ -24,10 +24,14 @@ export async function GET() {
     for (const blob of blobs) {
       if (blob.pathname.endsWith('.json')) {
         try {
-          const response = await fetch(blob.url)
-          if (!response.ok) continue
+          // קרא ישירות מ-MongoDB במקום fetch
+          const pages = await readJSON(blob.pathname)
           
-          const pages = await response.json()
+          if (!pages || !Array.isArray(pages)) {
+            console.warn(`No valid pages data for ${blob.pathname}`)
+            continue
+          }
+          
           const bookName = blob.pathname.split('/').pop().replace('.json', '')
           
           books.push({
