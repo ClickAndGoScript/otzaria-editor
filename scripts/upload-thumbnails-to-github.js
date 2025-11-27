@@ -13,6 +13,32 @@ const GITHUB_OWNER = process.env.GITHUB_OWNER
 const GITHUB_REPO = process.env.GITHUB_REPO
 const RELEASE_TAG = 'thumbnails-v1'
 
+// טען את ה-mapping
+function loadBookMapping() {
+  try {
+    const mappingPath = 'data/book-mapping.json'
+    if (fs.existsSync(mappingPath)) {
+      const data = fs.readFileSync(mappingPath, 'utf-8')
+      return JSON.parse(data)
+    }
+  } catch (error) {
+    console.error('⚠️  Error loading book mapping:', error.message)
+  }
+  return {}
+}
+
+// המר שם עברי ל-ID באנגלית
+function getBookIdFromName(bookName, mapping) {
+  // חפש בערכים של ה-mapping
+  const entry = Object.entries(mapping).find(([id, name]) => name === bookName)
+  if (entry) {
+    return entry[0]
+  }
+  
+  // אם לא נמצא, השתמש בשם התיקייה כמו שהוא
+  return bookName
+}
+
 async function uploadThumbnails() {
   try {
     console.log('🚀 Uploading thumbnails to GitHub Releases...')
@@ -49,6 +75,10 @@ async function uploadThumbnails() {
       throw error
     }
     
+    // טען את ה-mapping
+    const mapping = loadBookMapping()
+    console.log(`📖 Loaded mapping for ${Object.keys(mapping).length} books`)
+    
     // סרוק את תיקיית התמונות
     const thumbnailsDir = 'public/thumbnails'
     const books = fs.readdirSync(thumbnailsDir)
@@ -62,7 +92,13 @@ async function uploadThumbnails() {
       
       if (!fs.statSync(bookPath).isDirectory()) continue
       
+      // קבל את ה-ID של הספר (אם קיים במיפוי, אחרת השתמש בשם התיקייה)
+      const bookId = getBookIdFromName(bookName, mapping) || bookName
+      
       console.log(`\n📚 Processing book: ${bookName}`)
+      if (bookId !== bookName) {
+        console.log(`   Using ID: ${bookId}`)
+      }
       
       const files = fs.readdirSync(bookPath)
       const imageFiles = files.filter(f => {
@@ -75,7 +111,8 @@ async function uploadThumbnails() {
       for (const fileName of imageFiles) {
         try {
           const filePath = path.join(bookPath, fileName)
-          const assetName = `thumbnails_${bookName}_${fileName}`.replace(/ /g, '_')
+          // השתמש ב-ID במקום בשם העברי
+          const assetName = `${bookId}_${fileName}`.replace(/ /g, '_')
           
           // בדוק אם כבר קיים
           const { data: assets } = await octokit.repos.listReleaseAssets({

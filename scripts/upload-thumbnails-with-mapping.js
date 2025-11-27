@@ -29,45 +29,79 @@ async function uploadThumbnails() {
   try {
     console.log('🚀 Uploading thumbnails to GitHub with English names...')
     
-    // מחק release ישן אם קיים
+    // קבל או צור release
+    let release
     try {
       const { data: releases } = await octokit.repos.listReleases({
         owner: GITHUB_OWNER,
         repo: GITHUB_REPO,
       })
       
-      const oldRelease = releases.find(r => r.tag_name === RELEASE_TAG)
-      if (oldRelease) {
-        await octokit.repos.deleteRelease({
+      release = releases.find(r => r.tag_name === RELEASE_TAG)
+      
+      if (release) {
+        console.log('✅ Found existing release')
+      } else {
+        // צור release חדש
+        const { data: newRelease } = await octokit.repos.createRelease({
           owner: GITHUB_OWNER,
           repo: GITHUB_REPO,
-          release_id: oldRelease.id,
+          tag_name: RELEASE_TAG,
+          name: 'Thumbnails Storage v2',
+          body: 'Storage for book thumbnails with English names',
+          draft: false,
+          prerelease: false,
         })
-        console.log('🗑️  Deleted old release')
+        release = newRelease
+        console.log('✅ Created new release')
       }
     } catch (error) {
-      // אין release ישן, זה בסדר
+      console.error('❌ Error with release:', error.message)
+      throw error
     }
     
-    // צור release חדש
-    const { data: release } = await octokit.repos.createRelease({
-      owner: GITHUB_OWNER,
-      repo: GITHUB_REPO,
-      tag_name: RELEASE_TAG,
-      name: 'Thumbnails Storage v2',
-      body: 'Storage for book thumbnails with English names',
-      draft: false,
-      prerelease: false,
-    })
-    
-    console.log('✅ Created new release')
+    // טען mapping קיים מ-MongoDB
+    console.log('📖 Loading existing mapping from MongoDB...')
+    const existingMapping = await loadExistingMapping()
+    Object.assign(bookMapping, existingMapping)
+    console.log(`   Found ${Object.keys(existingMapping).length} existing books`)
     
     // סרוק את תיקיית התמונות
     const thumbnailsDir = 'public/thumbnails'
     const books = fs.readdirSync(thumbnailsDir)
     
-    let successCount = 0
-    let errorCount = 0
+    let totalSuccessCount = 0
+    let totalErrorCount = 0
+    let totalSkippedCount = 0
+    
+    // קבל רשימת assets קיימים פעם אחת (עם pagination)
+    console.log('📦 Loading existing assets from GitHub...')
+    let existingAssets = []
+    let page = 1
+    let hasMore = true
+    
+    while (hasMore) {
+      const { data: assets } = await octokit.repos.listReleaseAssets({
+        owner: GITHUB_OWNER,
+        repo: GITHUB_REPO,
+        release_id: release.id,
+        per_page: 100,
+        page: page,
+      })
+      
+      if (assets.length === 0) {
+        hasMore = false
+      } else {
+        existingAssets = existingAssets.concat(assets)
+        page++
+        
+        if (assets.length < 100) {
+          hasMore = false
+        }
+      }
+    }
+    
+    console.log(`   Found ${existingAssets.length} existing assets`)
     
     for (const bookName of books) {
       const bookPath = path.join(thumbnailsDir, bookName)
@@ -88,12 +122,23 @@ async function uploadThumbnails() {
       
       console.log(`   Found ${imageFiles.length} images`)
       
+      let bookSuccessCount = 0
+      let bookSkippedCount = 0
+      let bookErrorCount = 0
+      
       for (const fileName of imageFiles) {
         try {
           const filePath = path.join(bookPath, fileName)
           
           // שם קובץ באנגלית: book_abc123_page-1.jpg
           const assetName = `${bookId}_${fileName}`
+          
+          // בדוק אם כבר קיים
+          if (existingAssets.find(a => a.name === assetName)) {
+            bookSkippedCount++
+            totalSkippedCount++
+            continue
+          }
           
           // קרא את הקובץ
           const fileBuffer = fs.readFileSync(filePath)
@@ -112,16 +157,20 @@ async function uploadThumbnails() {
           })
           
           console.log(`   ✅ ${fileName}`)
-          successCount++
+          bookSuccessCount++
+          totalSuccessCount++
           
           // המתן קצת
           await new Promise(resolve => setTimeout(resolve, 500))
           
         } catch (error) {
           console.error(`   ❌ ${fileName}:`, error.message)
-          errorCount++
+          bookErrorCount++
+          totalErrorCount++
         }
       }
+      
+      console.log(`   📊 Book stats - Uploaded: ${bookSuccessCount}, Skipped: ${bookSkippedCount}, Errors: ${bookErrorCount}`)
     }
     
     // שמור את המיפוי ל-MongoDB
@@ -130,8 +179,9 @@ async function uploadThumbnails() {
     
     console.log('\n' + '='.repeat(50))
     console.log(`🎉 Upload completed!`)
-    console.log(`✅ Success: ${successCount} images`)
-    console.log(`❌ Errors: ${errorCount} images`)
+    console.log(`✅ Success: ${totalSuccessCount} images`)
+    console.log(`⏭️  Skipped: ${totalSkippedCount} images`)
+    console.log(`❌ Errors: ${totalErrorCount} images`)
     console.log(`📖 Books mapped: ${Object.keys(bookMapping).length}`)
     console.log('='.repeat(50))
     
@@ -142,6 +192,30 @@ async function uploadThumbnails() {
     
   } catch (error) {
     console.error('❌ Upload failed:', error)
+  }
+}
+
+async function loadExistingMapping() {
+  const { MongoClient } = await import('mongodb')
+  const client = new MongoClient(process.env.DATABASE_URL)
+  
+  try {
+    await client.connect()
+    const db = client.db('otzaria')
+    const collection = db.collection('files')
+    
+    const doc = await collection.findOne({ path: 'data/book-mapping.json' })
+    
+    if (doc && doc.data) {
+      return doc.data
+    }
+    
+    return {}
+  } catch (error) {
+    console.warn('⚠️  Could not load existing mapping:', error.message)
+    return {}
+  } finally {
+    await client.close()
   }
 }
 
