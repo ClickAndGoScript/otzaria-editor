@@ -41,6 +41,9 @@ export default function Header() {
         </Link>
         
         <nav className="hidden md:flex items-center gap-6">
+          <Link href="/" className="text-on-surface hover:text-primary transition-colors font-medium">
+            אוצריא
+          </Link>
           <Link href="/library/books" className="text-on-surface hover:text-primary transition-colors">
             ספרייה
           </Link>

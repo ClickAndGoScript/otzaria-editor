@@ -7,13 +7,12 @@ export default function OtzariaSoftwareHeader() {
   const pathname = usePathname()
 
   const navLinks = [
-    { href: '/', label: 'בית' },
+    { href: '/library', label: 'ספריית אוצריא' },
     { href: '/#download', label: 'הורדה' },
     { href: '/docs', label: 'מדריכים' },
     { href: '/faq', label: 'שאלות נפוצות' },
     { href: '/donate', label: 'תרומות' },
-    { href: '/about', label: 'אודות' },
-    { href: '/library', label: 'ספריית אוצריא' }
+    { href: '/about', label: 'אודות' }
   ]
 
   return (

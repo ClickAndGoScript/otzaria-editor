@@ -166,18 +166,16 @@ export default function HomePage() {
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Link href="#download" className="flex items-center justify-center gap-2 px-8 py-4 bg-primary text-on-primary rounded-lg text-lg font-medium hover:bg-accent transition-colors shadow-lg hover:shadow-xl">
-                  <span className="material-symbols-outlined">download</span>
-                  <span>הורד עכשיו</span>
+                <Link href="#download" className="flex items-center justify-center px-8 py-4 bg-primary text-on-primary rounded-lg text-lg font-medium hover:bg-accent transition-colors shadow-lg hover:shadow-xl">
+                  הורד עכשיו
                 </Link>
               </motion.div>
               <motion.div
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Link href="/about" className="flex items-center justify-center gap-2 px-8 py-4 glass border-2 border-primary text-primary rounded-lg text-lg font-medium hover:bg-primary-container transition-colors">
-                  <span className="material-symbols-outlined">info</span>
-                  <span>למד עוד</span>
+                <Link href="/about" className="flex items-center justify-center px-8 py-4 glass border-2 border-primary text-primary rounded-lg text-lg font-medium hover:bg-primary-container transition-colors">
+                  למד עוד
                 </Link>
               </motion.div>
             </motion.div>
