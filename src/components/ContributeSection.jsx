@@ -125,7 +125,7 @@ export default function ContributeSection() {
                 whileTap={{ scale: 0.95 }}
               >
                 <Link 
-                  href="/upload" 
+                  href="/library/upload" 
                   className="flex items-center justify-center gap-2 px-8 py-4 bg-primary text-on-primary rounded-lg text-lg font-medium hover:bg-accent transition-colors shadow-lg hover:shadow-xl w-full sm:w-auto"
                 >
                   <span className="material-symbols-outlined">add</span>
@@ -137,7 +137,7 @@ export default function ContributeSection() {
                 whileTap={{ scale: 0.95 }}
               >
                 <Link 
-                  href="/library" 
+                  href="/library/books" 
                   className="flex items-center justify-center gap-2 px-8 py-4 bg-surface text-on-surface rounded-lg text-lg font-medium hover:bg-surface-variant transition-colors border border-outline w-full sm:w-auto"
                 >
                   <span className="material-symbols-outlined">library_books</span>

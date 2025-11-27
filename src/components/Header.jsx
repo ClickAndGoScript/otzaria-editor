@@ -35,26 +35,26 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full glass-strong">
       <div className="container mx-auto flex h-16 items-center justify-between px-8">
-        <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity mr-4">
+        <Link href="/library" className="flex items-center gap-3 hover:opacity-80 transition-opacity mr-4">
           <Image src="/logo.png" alt="לוגו אוצריא" width={32} height={32} />
           <span className="text-xl font-bold text-black" style={{ fontFamily: 'FrankRuehl, serif' }}>ספריית אוצריא</span>
         </Link>
         
         <nav className="hidden md:flex items-center gap-6">
-          <Link href="/library" className="text-on-surface hover:text-primary transition-colors">
+          <Link href="/library/books" className="text-on-surface hover:text-primary transition-colors">
             ספרייה
           </Link>
-          <Link href="/users" className="text-on-surface hover:text-primary transition-colors">
+          <Link href="/library/users" className="text-on-surface hover:text-primary transition-colors">
             משתמשים
           </Link>
-          <Link href="/upload" className="text-on-surface hover:text-primary transition-colors">
+          <Link href="/library/upload" className="text-on-surface hover:text-primary transition-colors">
             שליחת ספרים
           </Link>
           
           {session ? (
             <div className="flex items-center gap-4">
               {session.user.role === 'admin' && (
-                <Link href="/admin" className="flex items-center gap-2 text-accent hover:text-accent/80 transition-colors relative">
+                <Link href="/library/admin" className="flex items-center gap-2 text-accent hover:text-accent/80 transition-colors relative">
                   <span className="material-symbols-outlined">admin_panel_settings</span>
                   <span>ניהול</span>
                   {unreadMessages > 0 && (
@@ -65,7 +65,7 @@ export default function Header() {
                 </Link>
               )}
               <Link 
-                href="/dashboard" 
+                href="/library/dashboard" 
                 className="flex items-center justify-center hover:opacity-80 transition-opacity"
                 title={session.user.name}
               >
@@ -77,7 +77,7 @@ export default function Header() {
                 </div>
               </Link>
               <button 
-                onClick={() => signOut({ callbackUrl: '/' })}
+                onClick={() => signOut({ callbackUrl: '/library' })}
                 className="flex items-center gap-2 px-6 py-2 border border-primary text-primary rounded-lg hover:bg-primary-container transition-colors"
               >
                 <span className="material-symbols-outlined">logout</span>
@@ -85,7 +85,7 @@ export default function Header() {
               </button>
             </div>
           ) : (
-            <Link href="/auth/login" className="flex items-center gap-2 px-6 py-2 bg-primary text-on-primary rounded-lg hover:bg-accent transition-colors">
+            <Link href="/library/auth/login" className="flex items-center gap-2 px-6 py-2 bg-primary text-on-primary rounded-lg hover:bg-accent transition-colors">
               <span className="material-symbols-outlined">login</span>
               <span>התחבר</span>
             </Link>
