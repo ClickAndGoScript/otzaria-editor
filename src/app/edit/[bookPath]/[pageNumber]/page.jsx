@@ -35,6 +35,10 @@ export default function EditPage() {
   const [splitMode, setSplitMode] = useState('content') // 'content' או 'visual'
   const [isContentSplit, setIsContentSplit] = useState(false) // האם זה פיצול תוכן אמיתי
   const [imageZoom, setImageZoom] = useState(100) // אחוז זום של התמונה
+  const [isSelectionMode, setIsSelectionMode] = useState(false) // מצב בחירת אזור
+  const [selectionStart, setSelectionStart] = useState(null) // נקודת התחלה של הבחירה
+  const [selectionEnd, setSelectionEnd] = useState(null) // נקודת סיום של הבחירה
+  const [selectionRect, setSelectionRect] = useState(null) // מלבן הבחירה הסופי
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -264,6 +268,208 @@ export default function EditPage() {
     }
   }
 
+  const getImageCoordinates = (e, img) => {
+    const imgRect = img.getBoundingClientRect()
+    
+    // קואורדינטות העכבר יחסית לתמונה המוצגת (עם scale)
+    const displayX = e.clientX - imgRect.left
+    const displayY = e.clientY - imgRect.top
+    
+    // התמונה הטבעית (לפני scale)
+    const naturalWidth = img.naturalWidth
+    const naturalHeight = img.naturalHeight
+    
+    // גודל התמונה המוצגת (אחרי scale)
+    const displayWidth = imgRect.width
+    const displayHeight = imgRect.height
+    
+    // המר לקואורדינטות של התמונה הטבעית
+    const x = (displayX / displayWidth) * naturalWidth
+    const y = (displayY / displayHeight) * naturalHeight
+    
+    return { x, y, displayX, displayY }
+  }
+
+  const handleContainerMouseDown = (e) => {
+    if (!isSelectionMode) return
+    
+    // בדוק שזה לחיצה על התמונה ולא על overlay אחר
+    if (e.target.classList.contains('selection-overlay')) return
+    
+    e.preventDefault()
+    e.stopPropagation()
+    
+    // קבל את התמונה
+    const container = e.currentTarget
+    const img = container.querySelector('img')
+    if (!img) return
+    
+    const coords = getImageCoordinates(e, img)
+    
+    // בדוק שהלחיצה היא בתוך התמונה
+    const imgRect = img.getBoundingClientRect()
+    if (coords.displayX < 0 || coords.displayY < 0 || 
+        coords.displayX > imgRect.width || coords.displayY > imgRect.height) return
+    
+    setSelectionStart(coords)
+    setSelectionEnd(coords)
+    setSelectionRect(null)
+  }
+
+  const handleContainerMouseMove = (e) => {
+    if (!isSelectionMode || !selectionStart) return
+    
+    e.preventDefault()
+    e.stopPropagation()
+    
+    const container = e.currentTarget
+    const img = container.querySelector('img')
+    if (!img) return
+    
+    const coords = getImageCoordinates(e, img)
+    setSelectionEnd(coords)
+  }
+
+  const handleContainerMouseUp = (e) => {
+    if (!isSelectionMode || !selectionStart || !selectionEnd) return
+    
+    e.preventDefault()
+    e.stopPropagation()
+    
+    // חשב את המלבן הסופי (בקואורדינטות תצוגה)
+    const rect = {
+      displayX: Math.min(selectionStart.displayX, selectionEnd.displayX),
+      displayY: Math.min(selectionStart.displayY, selectionEnd.displayY),
+      displayWidth: Math.abs(selectionEnd.displayX - selectionStart.displayX),
+      displayHeight: Math.abs(selectionEnd.displayY - selectionStart.displayY),
+      // קואורדינטות של התמונה המקורית
+      x: Math.min(selectionStart.x, selectionEnd.x),
+      y: Math.min(selectionStart.y, selectionEnd.y),
+      width: Math.abs(selectionEnd.x - selectionStart.x),
+      height: Math.abs(selectionEnd.y - selectionStart.y)
+    }
+    
+    // בדוק שהמלבן לא קטן מדי
+    if (rect.displayWidth < 20 || rect.displayHeight < 20) {
+      setSelectionStart(null)
+      setSelectionEnd(null)
+      alert('⚠️ האזור קטן מדי. אנא בחר אזור גדול יותר')
+      return
+    }
+    
+    setSelectionRect(rect)
+    setSelectionStart(null)
+    setSelectionEnd(null)
+  }
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode)
+    setSelectionStart(null)
+    setSelectionEnd(null)
+    setSelectionRect(null)
+  }
+
+  const handleOCRSelection = async () => {
+    if (!selectionRect) {
+      alert('❌ אנא בחר אזור בתמונה תחילה')
+      return
+    }
+
+    setIsOcrProcessing(true)
+    
+    try {
+      const Tesseract = (await import('tesseract.js')).default
+      
+      const progressDiv = document.createElement('div')
+      progressDiv.id = 'ocr-progress'
+      progressDiv.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-primary text-on-primary px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-3'
+      progressDiv.innerHTML = `
+        <span class="material-symbols-outlined animate-spin">progress_activity</span>
+        <span>מעבד OCR על האזור הנבחר... <span id="ocr-percent">0%</span></span>
+      `
+      document.body.appendChild(progressDiv)
+
+      // טען את התמונה המלאה
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(thumbnailUrl)}`
+      const response = await fetch(proxyUrl)
+      
+      if (!response.ok) {
+        throw new Error('Failed to load image via proxy')
+      }
+      
+      const blob = await response.blob()
+      
+      // צור canvas וחתוך את האזור הנבחר
+      const img = await createImageBitmap(blob)
+      
+      // השתמש בקואורדינטות המקוריות שכבר מחושבות נכון
+      const canvas = document.createElement('canvas')
+      canvas.width = selectionRect.width
+      canvas.height = selectionRect.height
+      const ctx = canvas.getContext('2d')
+      
+      // צייר רק את האזור הנבחר מהתמונה המקורית
+      ctx.drawImage(
+        img,
+        selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height,
+        0, 0, selectionRect.width, selectionRect.height
+      )
+      
+      // המר ל-blob
+      const croppedBlob = await new Promise(resolve => {
+        canvas.toBlob(resolve, 'image/jpeg', 0.95)
+      })
+
+      // הרץ OCR על האזור החתוך
+      const result = await Tesseract.recognize(
+        croppedBlob,
+        'heb',
+        {
+          logger: (m) => {
+            if (m.status === 'recognizing text') {
+              const percent = Math.round(m.progress * 100)
+              const percentEl = document.getElementById('ocr-percent')
+              if (percentEl) percentEl.textContent = `${percent}%`
+            }
+          }
+        }
+      )
+
+      progressDiv.remove()
+
+      const extractedText = result.data.text.trim()
+      
+      if (!extractedText) {
+        alert('⚠️ לא זוהה טקסט באזור הנבחר')
+        return
+      }
+
+      // הוסף את הטקסט לעורך
+      if (twoColumns) {
+        setRightColumn(prev => prev + (prev ? '\n' : '') + extractedText)
+        debouncedSave(content, leftColumn, rightColumn + '\n' + extractedText, twoColumns)
+      } else {
+        setContent(prev => prev + (prev ? '\n' : '') + extractedText)
+        debouncedSave(content + '\n' + extractedText, leftColumn, rightColumn, twoColumns)
+      }
+
+      alert(`✅ OCR הושלם בהצלחה!\nזוהו ${extractedText.length} תווים`)
+      
+      // נקה את הבחירה
+      setSelectionRect(null)
+      setIsSelectionMode(false)
+      
+    } catch (error) {
+      console.error('OCR Error:', error)
+      alert('❌ שגיאה בעיבוד OCR: ' + error.message)
+      
+      const progressDiv = document.getElementById('ocr-progress')
+      if (progressDiv) progressDiv.remove()
+    } finally {
+      setIsOcrProcessing(false)
+    }
+  }
+
   const handleOCR = async () => {
     if (!thumbnailUrl) {
       alert('❌ אין תמונה זמינה לעיבוד OCR')
@@ -286,9 +492,27 @@ export default function EditPage() {
       `
       document.body.appendChild(progressDiv)
 
+      // טען את התמונה דרך proxy כדי לעקוף CORS
+      let imageToProcess = thumbnailUrl
+      
+      // אם זה URL חיצוני (GitHub), השתמש ב-proxy שלנו
+      if (thumbnailUrl.startsWith('http://') || thumbnailUrl.startsWith('https://')) {
+        // השתמש ב-API proxy שלנו כדי לעקוף CORS
+        const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(thumbnailUrl)}`
+        
+        const response = await fetch(proxyUrl)
+        
+        if (!response.ok) {
+          throw new Error('Failed to load image via proxy')
+        }
+        
+        const blob = await response.blob()
+        imageToProcess = blob
+      }
+
       // הרץ OCR
       const result = await Tesseract.recognize(
-        thumbnailUrl,
+        imageToProcess,
         'heb', // עברית
         {
           logger: (m) => {
@@ -564,13 +788,57 @@ export default function EditPage() {
                   onClick={handleOCR}
                   disabled={isOcrProcessing || !thumbnailUrl}
                   className="flex items-center gap-1 p-2 hover:bg-white rounded transition-colors border border-transparent hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="זיהוי טקסט אוטומטי מהתמונה (OCR)"
+                  title="זיהוי טקסט אוטומטי מהתמונה המלאה (OCR)"
                 >
                   <span className={`material-symbols-outlined text-lg ${isOcrProcessing ? 'animate-spin' : ''}`}>
                     {isOcrProcessing ? 'progress_activity' : 'text_fields'}
                   </span>
                   {isOcrProcessing && <span className="text-sm">מעבד...</span>}
                 </button>
+
+                <button
+                  onClick={toggleSelectionMode}
+                  disabled={isOcrProcessing || !thumbnailUrl}
+                  className={`flex items-center gap-1 p-2 rounded transition-colors border disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isSelectionMode 
+                      ? 'bg-blue-500 text-white border-blue-600' 
+                      : 'hover:bg-white border-transparent hover:border-primary'
+                  }`}
+                  title="בחר אזור בתמונה לזיהוי טקסט (כמו Google Lens)"
+                >
+                  <span className="material-symbols-outlined text-lg">
+                    crop_free
+                  </span>
+                  {isSelectionMode && <span className="text-sm">בחר אזור</span>}
+                </button>
+
+                {selectionRect && (
+                  <>
+                    <button
+                      onClick={handleOCRSelection}
+                      disabled={isOcrProcessing}
+                      className="flex items-center gap-1 p-2 bg-green-500 text-white rounded transition-colors border border-green-600 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed animate-pulse"
+                      title="זהה טקסט באזור הנבחר"
+                    >
+                      <span className="material-symbols-outlined text-lg">
+                        check_circle
+                      </span>
+                      <span className="text-sm font-bold">זהה אזור</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectionRect(null)
+                        setIsSelectionMode(false)
+                      }}
+                      className="flex items-center gap-1 p-2 bg-red-500 text-white rounded transition-colors border border-red-600 hover:bg-red-600"
+                      title="בטל בחירה"
+                    >
+                      <span className="material-symbols-outlined text-lg">
+                        close
+                      </span>
+                    </button>
+                  </>
+                )}
                 
                 <div className="w-px h-6 bg-surface-variant"></div>
                 
@@ -711,26 +979,83 @@ export default function EditPage() {
           {/* Split Content Area */}
           <div className="flex-1 flex overflow-hidden">
             {/* Image Side */}
-            <div className="w-1/2 overflow-auto p-4 border-l border-surface-variant">
+            <div 
+              className="w-1/2 overflow-auto p-4 border-l border-surface-variant"
+              style={{ 
+                overflow: isSelectionMode && selectionStart ? 'hidden' : 'auto'
+              }}
+            >
               {thumbnailUrl ? (
-                <div className="inline-block">
+                <div 
+                  className="inline-block relative"
+                  onMouseDown={handleContainerMouseDown}
+                  onMouseMove={handleContainerMouseMove}
+                  onMouseUp={handleContainerMouseUp}
+                  style={{
+                    cursor: isSelectionMode ? 'crosshair' : 'default'
+                  }}
+                >
                   <img 
                     src={thumbnailUrl} 
                     alt={`עמוד ${pageNumber}`}
-                    className="rounded-lg shadow-lg transition-all duration-200"
+                    className="rounded-lg shadow-lg transition-all duration-200 select-none"
                     style={{ 
                       transform: `scale(${imageZoom / 100})`,
                       transformOrigin: 'top right',
                       maxWidth: 'none',
                       width: 'auto',
-                      height: 'auto'
+                      height: 'auto',
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none',
+                      MozUserSelect: 'none',
+                      msUserSelect: 'none',
+                      pointerEvents: 'none'
                     }}
+                    onDragStart={(e) => e.preventDefault()}
                     onError={(e) => {
                       console.error('Failed to load image:', thumbnailUrl)
                       e.target.style.display = 'none'
                       e.target.parentElement.nextSibling.style.display = 'flex'
                     }}
                   />
+                  
+                  {/* Selection Overlay - בזמן גרירה */}
+                  {isSelectionMode && selectionStart && selectionEnd && (
+                    <div
+                      className="absolute border-2 border-blue-500 bg-blue-500/20 pointer-events-none selection-overlay"
+                      style={{
+                        left: `${Math.min(selectionStart.displayX, selectionEnd.displayX)}px`,
+                        top: `${Math.min(selectionStart.displayY, selectionEnd.displayY)}px`,
+                        width: `${Math.abs(selectionEnd.displayX - selectionStart.displayX)}px`,
+                        height: `${Math.abs(selectionEnd.displayY - selectionStart.displayY)}px`,
+                      }}
+                    />
+                  )}
+                  
+                  {/* Selected Rectangle - אחרי שחרור העכבר */}
+                  {selectionRect && (
+                    <div
+                      className="absolute border-4 border-green-500 bg-green-500/10 pointer-events-none animate-pulse selection-overlay"
+                      style={{
+                        left: `${selectionRect.displayX}px`,
+                        top: `${selectionRect.displayY}px`,
+                        width: `${selectionRect.displayWidth}px`,
+                        height: `${selectionRect.displayHeight}px`,
+                      }}
+                    >
+                      <div className="absolute -top-8 left-0 bg-green-500 text-white px-2 py-1 rounded text-xs font-bold whitespace-nowrap">
+                        ✓ אזור נבחר - לחץ "זהה אזור"
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Selection Mode Indicator */}
+                  {isSelectionMode && !selectionRect && (
+                    <div className="absolute top-2 left-2 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 animate-pulse">
+                      <span className="material-symbols-outlined text-base">crop_free</span>
+                      <span>גרור לבחירת אזור</span>
+                    </div>
+                  )}
                 </div>
               ) : null}
               <div 
