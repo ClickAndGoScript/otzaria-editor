@@ -391,7 +391,7 @@ export default function EditPage() {
       },
       body: JSON.stringify({ 
         imageBase64,
-        model: 'gemini-2.5-flash'
+        model: 'gemini-2.5-flash'  // מודל מהיר וזול יותר
       })
     })
     
@@ -403,6 +403,8 @@ export default function EditPage() {
     
     return result.text
   }
+
+
 
   const handleOCRSelection = async () => {
     if (!selectionRect) {
@@ -460,7 +462,7 @@ export default function EditPage() {
       // הרץ OCR לפי השיטה שנבחרה
       if (ocrMethod === 'gemini') {
         // Gemini AI
-        progressDiv.querySelector('span:last-child').innerHTML = `מעבד ${methodName}... <span id="ocr-percent">⏳</span>`
+        progressDiv.querySelector('span:last-child').innerHTML = `מעבד Gemini AI... <span id="ocr-percent">⏳</span>`
         extractedText = await handleGeminiOCR(croppedBlob)
       } else {
         // Tesseract OCR
