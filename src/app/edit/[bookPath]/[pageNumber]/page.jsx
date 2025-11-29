@@ -40,6 +40,20 @@ export default function EditPage() {
   const [selectionEnd, setSelectionEnd] = useState(null) // נקודת סיום של הבחירה
   const [selectionRect, setSelectionRect] = useState(null) // מלבן הבחירה הסופי
   const [ocrMethod, setOcrMethod] = useState('tesseract') // 'tesseract' או 'gemini'
+  const [showSettings, setShowSettings] = useState(false) // הצגת sidebar הגדרות
+  const [userApiKey, setUserApiKey] = useState('') // API key של המשתמש
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash') // מודל נבחר
+  const [customPrompt, setCustomPrompt] = useState('The text is in Hebrew, written in Rashi script (traditional Hebrew font).\n\nTranscription guidelines:\n- Transcribe exactly what you see, letter by letter\n- Do NOT add nikud (vowel points) unless they appear in the image\n- Do NOT correct or "fix" words to make them more meaningful\n- Preserve the exact spelling, even if words seem unusual or abbreviated\n- In Rashi script: Final Mem (ם) looks like Samekh (ס), and Alef (א) looks like Het (ח) - be careful\n- Preserve all line breaks and spacing\n- Return only the Hebrew text without explanations')
+
+  // טען הגדרות מ-localStorage
+  useEffect(() => {
+    const savedApiKey = localStorage.getItem('gemini_api_key')
+    const savedPrompt = localStorage.getItem('gemini_prompt')
+    const savedModel = localStorage.getItem('gemini_model')
+    if (savedApiKey) setUserApiKey(savedApiKey)
+    if (savedPrompt) setCustomPrompt(savedPrompt)
+    if (savedModel) setSelectedModel(savedModel)
+  }, [])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -391,7 +405,9 @@ export default function EditPage() {
       },
       body: JSON.stringify({ 
         imageBase64,
-        model: 'gemini-2.5-flash'  // מודל מהיר וזול יותר
+        model: selectedModel,
+        userApiKey: userApiKey || undefined,
+        customPrompt: customPrompt || undefined
       })
     })
     
@@ -402,6 +418,18 @@ export default function EditPage() {
     }
     
     return result.text
+  }
+
+  const saveSettings = () => {
+    localStorage.setItem('gemini_api_key', userApiKey)
+    localStorage.setItem('gemini_prompt', customPrompt)
+    localStorage.setItem('gemini_model', selectedModel)
+    alert('✅ ההגדרות נשמרו')
+  }
+
+  const resetPrompt = () => {
+    const defaultPrompt = 'The text is in Hebrew, written in Rashi script (traditional Hebrew font).\n\nTranscription guidelines:\n- Transcribe exactly what you see, letter by letter\n- Do NOT add nikud (vowel points) unless they appear in the image\n- Do NOT correct or "fix" words to make them more meaningful\n- Preserve the exact spelling, even if words seem unusual or abbreviated\n- In Rashi script: Final Mem (ם) looks like Samekh (ס), and Alef (א) looks like Het (ח) - be careful\n- Preserve all line breaks and spacing\n- Return only the Hebrew text without explanations'
+    setCustomPrompt(defaultPrompt)
   }
 
 
@@ -800,6 +828,18 @@ export default function EditPage() {
           <div className="flex items-center justify-between gap-3">
             {/* Left Side - Image Tools */}
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className={`p-1.5 h-8 rounded-lg transition-colors flex items-center ${
+                  showSettings ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 text-gray-700'
+                }`}
+                title="הגדרות OCR"
+              >
+                <span className="material-symbols-outlined text-base">settings</span>
+              </button>
+
+              <div className="w-px h-6 bg-gray-200"></div>
+
               <span className="text-xs text-gray-500 font-medium">עמוד {pageNumber} מתוך {bookData?.totalPages}</span>
               
               <div className="w-px h-6 bg-gray-200"></div>
@@ -1475,6 +1515,169 @@ export default function EditPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Settings Sidebar */}
+      {showSettings && (
+        <>
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => setShowSettings(false)}
+          />
+          
+          {/* Sidebar */}
+          <div className="fixed right-0 top-0 bottom-0 w-96 bg-white shadow-2xl z-50 flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <span className="material-symbols-outlined">settings</span>
+                הגדרות OCR
+              </h2>
+              <button
+                onClick={() => setShowSettings(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              {/* API Key Section */}
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2 flex items-center gap-1">
+                  Gemini API Key
+                  <span className="text-red-500">*</span>
+                </label>
+                <p className="text-xs text-gray-600 mb-3">
+                  נדרש מפתח אישי לשימוש ב-Gemini OCR. 
+                  <a 
+                    href="https://aistudio.google.com/app/apikey" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline mr-1"
+                  >
+                    קבל מפתח חינם כאן
+                  </a>
+                </p>
+                <input
+                  type="password"
+                  value={userApiKey}
+                  onChange={(e) => setUserApiKey(e.target.value)}
+                  placeholder="AIzaSy..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
+                  required
+                />
+                {userApiKey ? (
+                  <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">check_circle</span>
+                    מפתח הוזן
+                  </p>
+                ) : (
+                  <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">error</span>
+                    חובה להזין מפתח לשימוש ב-Gemini
+                  </p>
+                )}
+              </div>
+
+              {/* Model Selection */}
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2">
+                  בחירת מודל
+                </label>
+                <p className="text-xs text-gray-600 mb-3">
+                  מודלים שונים מציעים איזון שונה בין מהירות, דיוק ועלות
+                </p>
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  <optgroup label="מומלץ - מהיר וזול">
+                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (מומלץ)</option>
+                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                    <option value="gemini-flash-latest">Gemini Flash Latest</option>
+                  </optgroup>
+                  <optgroup label="קל - מהיר מאוד">
+                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+                    <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
+                    <option value="gemini-flash-lite-latest">Gemini Flash Lite Latest</option>
+                  </optgroup>
+                  <optgroup label="Pro - מדויק יותר (יקר)">
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                    <option value="gemini-pro-latest">Gemini Pro Latest</option>
+                  </optgroup>
+                </select>
+                <p className="text-xs text-gray-500 mt-2">
+                  נבחר: <span className="font-mono">{selectedModel}</span>
+                </p>
+              </div>
+
+              {/* Custom Prompt Section */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-bold text-gray-900">
+                    פרומפט מותאם אישית
+                  </label>
+                  <button
+                    onClick={resetPrompt}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    איפוס לברירת מחדל
+                  </button>
+                </div>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 mb-3">
+                  <p className="text-xs text-yellow-800">
+                    <span className="font-bold">🔒 הגנה:</span> יש פרומפט מערכת קבוע שמבטיח שהמודל יבצע רק OCR. הפרומפט שלך משני לו ולא יכול לעקוף אותו.
+                  </p>
+                </div>
+                <p className="text-xs text-gray-600 mb-3">
+                  ערוך את ההנחיות ל-Gemini AI. הפרומפט באנגלית עובד טוב יותר.
+                </p>
+                <textarea
+                  value={customPrompt}
+                  onChange={(e) => setCustomPrompt(e.target.value)}
+                  rows={12}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-mono resize-none"
+                  dir="ltr"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  {customPrompt.length} תווים
+                </p>
+              </div>
+
+              {/* Tips */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <h3 className="text-sm font-bold text-blue-900 mb-2 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-base">lightbulb</span>
+                  טיפים
+                </h3>
+                <ul className="text-xs text-blue-800 space-y-1">
+                  <li>• המפתח נשמר בדפדפן שלך בלבד (localStorage)</li>
+                  <li>• המפתח לא נשלח לשרת - רק ישירות ל-Google</li>
+                  <li>• Flash - מהיר וזול, מומלץ לרוב המקרים</li>
+                  <li>• Lite - מהיר מאוד, טוב לטקסט פשוט</li>
+                  <li>• Pro - מדויק יותר אבל יקר ואיטי יותר</li>
+                  <li>• פרומפט באנגלית מייצר תוצאות טובות יותר</li>
+                  <li>• ציין בפרומפט את סוג הטקסט (רש"י, מרובע, וכו')</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-gray-200">
+              <button
+                onClick={saveSettings}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold"
+              >
+                <span className="material-symbols-outlined">save</span>
+                שמור הגדרות
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )
