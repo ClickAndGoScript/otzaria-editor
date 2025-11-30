@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import AddBookDialog from '@/components/AddBookDialog'
 
 export default function AdminClient({ session }) {
     const [users, setUsers] = useState([])
@@ -1286,44 +1287,12 @@ export default function AdminClient({ session }) {
                 </div>
             )}
 
-            {/* Add Book Modal */}
-            {showAddBook && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="glass-strong p-8 rounded-2xl max-w-md mx-4 w-full">
-                        <h3 className="text-2xl font-bold mb-4 text-on-surface">הוסף ספר חדש</h3>
-                        <p className="text-on-surface/70 mb-4 text-sm">
-                            הזן את שם הספר בדיוק כפי שהוא מופיע ב-GitHub Releases
-                        </p>
-                        <input
-                            type="text"
-                            value={newBookName}
-                            onChange={(e) => setNewBookName(e.target.value)}
-                            placeholder="שם הספר..."
-                            className="w-full px-4 py-3 border border-surface-variant rounded-lg focus:outline-none focus:border-primary bg-white text-on-surface mb-6"
-                            disabled={addingBook}
-                        />
-                        <div className="flex gap-3">
-                            <button
-                                onClick={handleAddBook}
-                                disabled={addingBook}
-                                className="flex-1 px-4 py-3 bg-primary text-on-primary rounded-lg hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {addingBook ? 'מוסיף...' : 'הוסף'}
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowAddBook(false)
-                                    setNewBookName('')
-                                }}
-                                disabled={addingBook}
-                                className="flex-1 px-4 py-3 glass rounded-lg hover:bg-surface-variant transition-colors disabled:opacity-50"
-                            >
-                                ביטול
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Add Book Modal - New Component */}
+            <AddBookDialog 
+                isOpen={showAddBook} 
+                onClose={() => setShowAddBook(false)}
+                onBookAdded={() => loadData()}
+            />
 
             {/* Send Message Dialog */}
             {showSendMessageDialog && (

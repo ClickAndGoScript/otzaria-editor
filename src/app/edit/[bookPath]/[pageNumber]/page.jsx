@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
@@ -41,6 +41,8 @@ export default function EditPage() {
   const [selectionRect, setSelectionRect] = useState(null) // מלבן הבחירה הסופי
   const [ocrMethod, setOcrMethod] = useState('tesseract') // 'tesseract' או 'gemini'
   const [showSettings, setShowSettings] = useState(false) // הצגת sidebar הגדרות
+  const imageContainerRef = useRef(null) // ref לקונטיינר התמונה
+  const autoScrollRef = useRef(null) // ref ל-interval של auto-scroll
   const [userApiKey, setUserApiKey] = useState('') // API key של המשתמש
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash') // מודל נבחר
   const [customPrompt, setCustomPrompt] = useState('The text is in Hebrew, written in Rashi script (traditional Hebrew font).\n\nTranscription guidelines:\n- Transcribe exactly what you see, letter by letter\n- Do NOT add nikud (vowel points) unless they appear in the image\n- Do NOT correct or "fix" words to make them more meaningful\n- Preserve the exact spelling, even if words seem unusual or abbreviated\n- In Rashi script: Final Mem (ם) looks like Samekh (ס), and Alef (א) looks like Het (ח) - be careful\n- Preserve all line breaks and spacing\n- Return only the Hebrew text without explanations')
@@ -343,9 +345,54 @@ export default function EditPage() {
     
     const coords = getImageCoordinates(e, img)
     setSelectionEnd(coords)
+    
+    // Auto-scroll כשמגיעים לקצוות
+    const scrollContainer = imageContainerRef.current
+    if (!scrollContainer) return
+    
+    const containerRect = scrollContainer.getBoundingClientRect()
+    const mouseX = e.clientX
+    const mouseY = e.clientY
+    const scrollSpeed = 15
+    const edgeThreshold = 50 // מרחק מהקצה שמפעיל גלילה
+    
+    // נקה interval קודם
+    if (autoScrollRef.current) {
+      clearInterval(autoScrollRef.current)
+      autoScrollRef.current = null
+    }
+    
+    let scrollX = 0
+    let scrollY = 0
+    
+    // בדוק קרבה לקצוות
+    if (mouseY < containerRect.top + edgeThreshold) {
+      scrollY = -scrollSpeed // גלול למעלה
+    } else if (mouseY > containerRect.bottom - edgeThreshold) {
+      scrollY = scrollSpeed // גלול למטה
+    }
+    
+    if (mouseX < containerRect.left + edgeThreshold) {
+      scrollX = -scrollSpeed // גלול שמאלה
+    } else if (mouseX > containerRect.right - edgeThreshold) {
+      scrollX = scrollSpeed // גלול ימינה
+    }
+    
+    // אם צריך לגלול, הפעל interval
+    if (scrollX !== 0 || scrollY !== 0) {
+      autoScrollRef.current = setInterval(() => {
+        scrollContainer.scrollBy(scrollX, scrollY)
+      }, 16) // ~60fps
+    }
   }
 
   const handleContainerMouseUp = (e) => {
+    // נקה auto-scroll
+    if (autoScrollRef.current) {
+      clearInterval(autoScrollRef.current)
+      autoScrollRef.current = null
+    }
+    
     if (!isSelectionMode || !selectionStart || !selectionEnd) return
     
     e.preventDefault()
@@ -378,6 +425,11 @@ export default function EditPage() {
   }
 
   const toggleSelectionMode = () => {
+    // נקה auto-scroll אם קיים
+    if (autoScrollRef.current) {
+      clearInterval(autoScrollRef.current)
+      autoScrollRef.current = null
+    }
     setIsSelectionMode(!isSelectionMode)
     setSelectionStart(null)
     setSelectionEnd(null)
@@ -1095,9 +1147,10 @@ export default function EditPage() {
           <div className="flex-1 flex overflow-hidden">
             {/* Image Side */}
             <div 
+              ref={imageContainerRef}
               className="w-1/2 overflow-auto p-4 border-l border-surface-variant"
               style={{ 
-                overflow: isSelectionMode && selectionStart ? 'hidden' : 'auto'
+                overflow: 'auto' // תמיד אפשר גלילה כדי לתמוך ב-auto-scroll
               }}
             >
               {thumbnailUrl ? (
