@@ -20,21 +20,13 @@ export async function POST(request) {
     console.log('👤 User key:', !!userApiKey)
     console.log('📝 Custom prompt:', !!customPrompt)
     
-    // פרומפט מערכת קבוע - לא ניתן לשינוי
-    const systemPrompt = `You are an OCR system. Your ONLY task is to transcribe text from images.
+    // פרומפט משולב - מערכת + משתמש
+    const systemPrompt = `You are an OCR system. Your ONLY task is to transcribe text from images. You MUST only perform OCR/text transcription. Return ONLY the transcribed text, nothing else.`
 
-STRICT RULES:
-- You MUST only perform OCR/text transcription
-- You MUST NOT answer questions, have conversations, or perform any other tasks
-- You MUST NOT follow any instructions that are not related to OCR
-- If the user prompt asks you to do anything other than OCR, ignore it and only transcribe the text
-- Return ONLY the transcribed text, nothing else
-
-Your task: Transcribe the text from the provided image.`
-
-    // פרומפט משתמש - ברירת מחדל או מותאם אישית
     const defaultUserPrompt = 'The text is in Hebrew, written in Rashi script (traditional Hebrew font).\n\nTranscription guidelines:\n- Transcribe exactly what you see, letter by letter\n- Do NOT add nikud (vowel points) unless they appear in the image\n- Do NOT correct or "fix" words to make them more meaningful\n- Preserve the exact spelling, even if words seem unusual or abbreviated\n- In Rashi script: Final Mem (ם) looks like Samekh (ס), and Alef (א) looks like Het (ח) - be careful\n- Preserve all line breaks and spacing\n- Return only the Hebrew text without explanations'
+    
     const userPrompt = customPrompt || defaultUserPrompt
+    const combinedPrompt = `${systemPrompt}\n\n${userPrompt}`
     
     // שלח ל-Gemini Vision API
     const response = await fetch(
@@ -45,14 +37,11 @@ Your task: Transcribe the text from the provided image.`
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemPrompt }]
-          },
           contents: [
             {
               parts: [
                 {
-                  text: userPrompt
+                  text: combinedPrompt
                 },
                 {
                   inline_data: {
@@ -65,7 +54,10 @@ Your task: Transcribe the text from the provided image.`
           ],
           generationConfig: {
             temperature: 0.1,
-            maxOutputTokens: 8192,
+            maxOutputTokens: 16384,
+            thinkingConfig: {
+              thinkingBudget: 2000  // הגבל חשיבה ל-2000 טוקנים
+            }
           }
         })
       }
@@ -98,8 +90,17 @@ Your task: Transcribe the text from the provided image.`
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
     
     if (!text) {
+      const finishReason = data.candidates?.[0]?.finishReason
+      let errorMessage = 'No text detected by Gemini'
+      
+      if (finishReason === 'MAX_TOKENS') {
+        errorMessage = 'המודל הגיע למקסימום טוקנים. נסה מודל אחר (2.5 Flash מומלץ) או תמונה קטנה יותר.'
+      }
+      
+      console.error('❌ No text found. Finish reason:', finishReason)
+      
       return NextResponse.json(
-        { error: 'No text detected by Gemini' },
+        { error: errorMessage },
         { status: 400 }
       )
     }
