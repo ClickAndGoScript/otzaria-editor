@@ -680,7 +680,7 @@ export default function EditPage() {
       if (!container) return
 
       const containerRect = container.getBoundingClientRect()
-      
+
       let newSize
       if (layoutOrientation === 'horizontal') {
         // מצב אופקי - חשב לפי Y
@@ -1374,10 +1374,13 @@ export default function EditPage() {
                 <button
                   onClick={toggleColumns}
                   className="w-8 h-8 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center"
-                  title={twoColumns ? 'שני טורים' : 'טור אחד'}
+                  title={twoColumns ? 'איחוד לטור אחד' : 'פיצול לשני טורים'}
                 >
-                  <span className="material-symbols-outlined text-base">
-                    {twoColumns ? 'view_column' : 'view_agenda'}
+                  <span
+                    className="material-symbols-outlined text-base"
+                    style={{ transform: 'rotate(90deg)' }}
+                  >
+                    {twoColumns ? 'unfold_less' : 'unfold_more'}
                   </span>
                 </button>
 
@@ -1413,9 +1416,9 @@ export default function EditPage() {
         <div className="flex-1 flex flex-col overflow-hidden p-6">
           <div className="glass-strong rounded-xl border border-surface-variant flex-1 flex flex-col overflow-hidden">
             {/* Split Content Area */}
-            <div 
-              className="flex-1 flex overflow-hidden split-container" 
-              style={{ 
+            <div
+              className="flex-1 flex overflow-hidden split-container"
+              style={{
                 position: 'relative',
                 flexDirection: layoutOrientation === 'horizontal' ? 'column' : 'row'
               }}
@@ -1555,9 +1558,8 @@ export default function EditPage() {
 
               {/* Resizable Divider */}
               <div
-                className={`relative flex items-center justify-center hover:bg-primary/10 transition-colors ${
-                  layoutOrientation === 'horizontal' ? 'cursor-row-resize' : 'cursor-col-resize'
-                }`}
+                className={`relative flex items-center justify-center hover:bg-primary/10 transition-colors ${layoutOrientation === 'horizontal' ? 'cursor-row-resize' : 'cursor-col-resize'
+                  }`}
                 style={{
                   width: layoutOrientation === 'horizontal' ? '100%' : '8px',
                   height: layoutOrientation === 'horizontal' ? '8px' : 'auto',
@@ -1567,7 +1569,7 @@ export default function EditPage() {
                 }}
                 onMouseDown={handleResizeStart}
               >
-                <div 
+                <div
                   className="absolute bg-surface-variant rounded-full"
                   style={{
                     width: layoutOrientation === 'horizontal' ? '12px' : '1px',
