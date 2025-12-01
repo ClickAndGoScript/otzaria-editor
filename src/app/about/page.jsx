@@ -36,8 +36,7 @@ export default function AboutOtzariaPage() {
     { name: 'Y.PL.', github: 'https://github.com/Y-PLONI' },
     { name: 'YOSEFTT', github: 'https://github.com/YOSEFTT' },
     { name: 'zevisvei', github: 'https://github.com/zevisvei' },
-    { name: 'NHLOCAL', github: 'https://github.com/NHLOCAL/Shamor-Zachor', role: '(פיתוח "זכור ושמור")' },
-    { name: 'evel-avalim', github: 'https://github.com/evel-avalim', role: '(פיתוח הגימטריות)' },
+    { name: 'evel-avalim', github: 'https://github.com/evel-avalim' },
     { name: 'userbot', github: 'https://github.com/userbot000' }
   ]
 
@@ -109,7 +108,7 @@ export default function AboutOtzariaPage() {
             </div>
 
             {/* Memorial Cards */}
-            <div className="mb-12">
+            <div className="mb-8">
               <h2 className="text-3xl font-bold text-primary-dark mb-6">תורמים</h2>
               <div className="grid md:grid-cols-3 gap-4">
                 <div className="glass p-6 rounded-xl text-center border-2 border-accent-color">
@@ -145,9 +144,9 @@ export default function AboutOtzariaPage() {
             </div>
 
             {/* Developers */}
-            <div className="mb-12">
+            <div className="mb-8">
               <h2 className="text-3xl font-bold text-primary-dark mb-6">מפתחים</h2>
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-3 gap-4">
                 {developers.map((dev, index) => (
                   <motion.div
                     key={index}

@@ -93,7 +93,7 @@ export default function DonatePage() {
             <h2 className="text-3xl font-bold text-primary-dark mb-6">תרומה מהירה</h2>
             <div className="flex flex-col md:flex-row gap-4">
               <a
-                href="https://www.jgive.com/new/he/ils/donation-targets/80496"
+                href="https://www.matara.pro/nedarimplus/online/?S=ejco"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 flex items-center gap-4 p-6 bg-blue-50 border-4 border-blue-400 rounded-xl hover:bg-blue-100 transition-all hover:scale-[1.02]"
