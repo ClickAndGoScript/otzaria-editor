@@ -48,7 +48,7 @@ export default function AdminClient({ session }) {
         try {
             setLoading(true)
             console.log('📊 Loading admin data...')
-            
+
             const [usersRes, booksRes, uploadsRes] = await Promise.all([
                 fetch('/api/users/list'),
                 fetch('/api/library/list'),
@@ -67,7 +67,7 @@ export default function AdminClient({ session }) {
             if (booksData.success) {
                 console.log(`✅ Setting ${booksData.books.length} books`)
                 setBooks(booksData.books)
-                
+
                 // אם אין ספרים ועדיין לא ניסינו retry, נסה שוב
                 if (booksData.books.length === 0 && retryCount < 2) {
                     console.log(`🔄 No books found, retrying (${retryCount + 1}/2)...`)
@@ -81,7 +81,7 @@ export default function AdminClient({ session }) {
             if (uploadsData.success) setUploads(uploadsData.uploads)
         } catch (error) {
             console.error('❌ Error loading data:', error)
-            
+
             // אם יש שגיאה ועדיין לא ניסינו retry, נסה שוב
             if (retryCount < 2) {
                 console.log(`🔄 Error occurred, retrying (${retryCount + 1}/2)...`)
@@ -321,14 +321,14 @@ export default function AdminClient({ session }) {
             if (result.success) {
                 // עדכן את הרשימה מיד
                 setBooks(books.filter(b => b.path !== bookPath && b.name !== bookPath && b.id !== bookPath))
-                
+
                 // רענן גם את הנתונים מהשרת
                 const booksRes = await fetch('/api/library/list?refresh=true')
                 const booksData = await booksRes.json()
                 if (booksData.success) {
                     setBooks(booksData.books)
                 }
-                
+
                 alert('הספר נמחק בהצלחה!')
             } else {
                 alert(result.error || 'שגיאה במחיקת ספר')
@@ -364,7 +364,7 @@ export default function AdminClient({ session }) {
                     // אם נכשל, לפחות הוסף את הספר החדש
                     setBooks([...books, result.book])
                 }
-                
+
                 setNewBookName('')
                 setShowAddBook(false)
                 alert(result.message)
@@ -397,6 +397,99 @@ export default function AdminClient({ session }) {
         } catch (error) {
             console.error('Error updating upload status:', error)
             alert('שגיאה בעדכון סטטוס')
+        }
+    }
+
+    const handleApproveAllPending = async () => {
+        const pendingUploads = uploads.filter(u => u.status === 'pending')
+
+        if (pendingUploads.length === 0) {
+            alert('אין העלאות ממתינות לאישור')
+            return
+        }
+
+        if (!confirm(`האם אתה בטוח שברצונך לאשר ${pendingUploads.length} העלאות?`)) {
+            return
+        }
+
+        try {
+            let successCount = 0
+            let failCount = 0
+
+            for (const upload of pendingUploads) {
+                try {
+                    const response = await fetch('/api/admin/uploads/update-status', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ uploadId: upload.id, status: 'approved' })
+                    })
+
+                    const result = await response.json()
+                    if (result.success) {
+                        successCount++
+                    } else {
+                        failCount++
+                    }
+                } catch (error) {
+                    console.error('Error approving upload:', upload.id, error)
+                    failCount++
+                }
+            }
+
+            // רענן את הרשימה
+            const uploadsRes = await fetch('/api/admin/uploads/list')
+            const uploadsData = await uploadsRes.json()
+            if (uploadsData.success) {
+                setUploads(uploadsData.uploads)
+            }
+
+            alert(`אושרו ${successCount} העלאות בהצלחה!${failCount > 0 ? ` (${failCount} נכשלו)` : ''}`)
+        } catch (error) {
+            console.error('Error approving all uploads:', error)
+            alert('שגיאה באישור ההעלאות')
+        }
+    }
+
+    const handleDownloadAllPending = async () => {
+        const pendingUploads = uploads.filter(u => u.status === 'pending' && u.fileName)
+
+        if (pendingUploads.length === 0) {
+            alert('אין קבצים להורדה')
+            return
+        }
+
+        if (!confirm(`האם אתה בטוח שברצונך להוריד ${pendingUploads.length} קבצים?`)) {
+            return
+        }
+
+        try {
+            let successCount = 0
+            let failCount = 0
+
+            for (const upload of pendingUploads) {
+                try {
+                    // יצירת קישור להורדה
+                    const link = document.createElement('a')
+                    link.href = `/api/download/${upload.fileName}`
+                    link.download = upload.originalFileName || upload.fileName
+                    document.body.appendChild(link)
+                    link.click()
+                    document.body.removeChild(link)
+
+                    successCount++
+
+                    // המתנה קצרה בין הורדות כדי לא להציף את הדפדפן
+                    await new Promise(resolve => setTimeout(resolve, 300))
+                } catch (error) {
+                    console.error('Error downloading file:', upload.fileName, error)
+                    failCount++
+                }
+            }
+
+            alert(`הורדו ${successCount} קבצים בהצלחה!${failCount > 0 ? ` (${failCount} נכשלו)` : ''}`)
+        } catch (error) {
+            console.error('Error downloading all files:', error)
+            alert('שגיאה בהורדת הקבצים')
         }
     }
 
@@ -797,7 +890,29 @@ export default function AdminClient({ session }) {
 
                         {activeTab === 'uploads' && (
                             <div className="glass-strong p-6 rounded-xl">
-                                <h2 className="text-2xl font-bold mb-6 text-on-surface">העלאות משתמשים</h2>
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-2xl font-bold text-on-surface">העלאות משתמשים</h2>
+                                    <div className="flex gap-3">
+                                        {uploads?.filter(u => u.status === 'pending' && u.fileName).length > 0 && (
+                                            <button
+                                                onClick={handleDownloadAllPending}
+                                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined">download</span>
+                                                <span>הורד הכל ({uploads.filter(u => u.status === 'pending' && u.fileName).length})</span>
+                                            </button>
+                                        )}
+                                        {uploads?.filter(u => u.status === 'pending').length > 0 && (
+                                            <button
+                                                onClick={handleApproveAllPending}
+                                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined">done_all</span>
+                                                <span>אשר הכל ({uploads.filter(u => u.status === 'pending').length})</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
                                 {!uploads || uploads.length === 0 ? (
                                     <div className="text-center py-12">
                                         <span className="material-symbols-outlined text-6xl text-on-surface/30 mb-4">
@@ -823,17 +938,16 @@ export default function AdminClient({ session }) {
                                                                     הועלה על ידי: <span className="font-medium">{upload.uploadedBy}</span>
                                                                 </p>
                                                             </div>
-                                                            <span className={`px-4 py-2 rounded-full text-sm font-bold ${
-                                                                upload.status === 'approved'
-                                                                    ? 'bg-green-100 text-green-800'
-                                                                    : upload.status === 'rejected'
-                                                                        ? 'bg-red-100 text-red-800'
-                                                                        : 'bg-yellow-100 text-yellow-800'
-                                                            }`}>
+                                                            <span className={`px-4 py-2 rounded-full text-sm font-bold ${upload.status === 'approved'
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : upload.status === 'rejected'
+                                                                    ? 'bg-red-100 text-red-800'
+                                                                    : 'bg-yellow-100 text-yellow-800'
+                                                                }`}>
                                                                 {upload.status === 'approved' ? '✓ אושר' : upload.status === 'rejected' ? '✗ נדחה' : '⏳ ממתין'}
                                                             </span>
                                                         </div>
-                                                        
+
                                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
                                                             <div>
                                                                 <span className="text-on-surface/60">שם קובץ:</span>
@@ -929,7 +1043,7 @@ export default function AdminClient({ session }) {
                         {activeTab === 'pages' && (
                             <div className="glass-strong p-6 rounded-xl">
                                 <h2 className="text-2xl font-bold mb-6 text-on-surface">ניהול עמודים</h2>
-                                
+
                                 {/* Filters */}
                                 <div className="grid md:grid-cols-3 gap-4 mb-6">
                                     <select
@@ -996,22 +1110,21 @@ export default function AdminClient({ session }) {
                                                                 <option value="completed">הושלם</option>
                                                             </select>
                                                         ) : (
-                                                            <span className={`px-3 py-1 rounded-full text-sm ${
-                                                                page.status === 'completed'
-                                                                    ? 'bg-green-100 text-green-800'
-                                                                    : page.status === 'in-progress'
-                                                                        ? 'bg-blue-100 text-blue-800'
-                                                                        : 'bg-gray-100 text-gray-800'
-                                                            }`}>
+                                                            <span className={`px-3 py-1 rounded-full text-sm ${page.status === 'completed'
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : page.status === 'in-progress'
+                                                                    ? 'bg-blue-100 text-blue-800'
+                                                                    : 'bg-gray-100 text-gray-800'
+                                                                }`}>
                                                                 {page.status === 'completed' ? 'הושלם' : page.status === 'in-progress' ? 'בטיפול' : 'זמין'}
                                                             </span>
                                                         )}
                                                     </td>
                                                     <td className="p-4 text-on-surface">{page.claimedBy || '-'}</td>
                                                     <td className="p-4 text-on-surface/70 text-sm">
-                                                        {page.completedAt 
+                                                        {page.completedAt
                                                             ? new Date(page.completedAt).toLocaleDateString('he-IL')
-                                                            : page.claimedAt 
+                                                            : page.claimedAt
                                                                 ? new Date(page.claimedAt).toLocaleDateString('he-IL')
                                                                 : '-'
                                                         }
@@ -1105,13 +1218,12 @@ export default function AdminClient({ session }) {
                                                     <div className="flex-1">
                                                         <div className="flex items-center gap-3 mb-2">
                                                             <h3 className="text-xl font-bold text-on-surface">{message.subject}</h3>
-                                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                                                message.status === 'unread' 
-                                                                    ? 'bg-blue-100 text-blue-800'
-                                                                    : message.status === 'replied'
-                                                                        ? 'bg-green-100 text-green-800'
-                                                                        : 'bg-gray-100 text-gray-800'
-                                                            }`}>
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${message.status === 'unread'
+                                                                ? 'bg-blue-100 text-blue-800'
+                                                                : message.status === 'replied'
+                                                                    ? 'bg-green-100 text-green-800'
+                                                                    : 'bg-gray-100 text-gray-800'
+                                                                }`}>
                                                                 {message.status === 'unread' ? 'חדש' : message.status === 'replied' ? 'נענה' : 'נקרא'}
                                                             </span>
                                                         </div>
@@ -1296,8 +1408,8 @@ export default function AdminClient({ session }) {
             )}
 
             {/* Add Book Modal - New Component */}
-            <AddBookDialog 
-                isOpen={showAddBook} 
+            <AddBookDialog
+                isOpen={showAddBook}
                 onClose={() => setShowAddBook(false)}
                 onBookAdded={() => loadData()}
             />
@@ -1319,7 +1431,7 @@ export default function AdminClient({ session }) {
                             <span className="material-symbols-outlined text-3xl text-primary">send</span>
                             שלח הודעה למשתמשים
                         </h3>
-                        
+
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-on-surface mb-2">נמען</label>
