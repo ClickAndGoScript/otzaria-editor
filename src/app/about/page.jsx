@@ -82,8 +82,8 @@ export default function AboutOtzariaPage() {
                 זהו הכלי שלך ללימוד תורה פורה ומועיל, בקלות ובכל מקום
               </h2>
               <p className="text-lg text-on-surface/80 leading-relaxed mb-4">
-                בין אם אתה בחור ישיבה שרוצה לעיין בראשונים או אחרונים על הסוגיא, או אברך שרוצה להקיף נושא בהלכה. 
-                אם את מורה בבית יעקב שצריכה להכין שיעור על פרשת השבוע, או אם אתה רק רוצה ללמוד דף היומי במיטה, 
+                בין אם אתה בחור ישיבה שרוצה לעיין בראשונים או אחרונים על הסוגיא, או אברך שרוצה להקיף נושא בהלכה.
+                אם את מורה בבית יעקב שצריכה להכין שיעור על פרשת השבוע, או אם אתה רק רוצה ללמוד דף היומי במיטה,
                 אוצריא מספקת לך ספריה תורנית רחבה ונגישה בכל מקום.
               </p>
               <p className="text-lg text-on-surface/80 leading-relaxed">
@@ -121,7 +121,7 @@ export default function AboutOtzariaPage() {
                 </div>
 
                 <Link
-                  href="/otzaria-software/donate"
+                  href="/donate"
                   className="glass p-6 rounded-xl text-center border-2 border-dashed border-primary hover:border-solid hover:bg-primary-container transition-all"
                 >
                   <div className="flex items-center justify-center gap-2 mb-3">
@@ -132,7 +132,7 @@ export default function AboutOtzariaPage() {
                 </Link>
 
                 <Link
-                  href="/otzaria-software/donate"
+                  href="/donate"
                   className="glass p-6 rounded-xl text-center border-2 border-dashed border-primary hover:border-solid hover:bg-primary-container transition-all"
                 >
                   <div className="flex items-center justify-center gap-2 mb-3">

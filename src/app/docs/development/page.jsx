@@ -26,9 +26,9 @@ export default function DevelopmentTutorialPage() {
         <div className="container mx-auto max-w-6xl">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-on-surface/60 mb-6">
-            <Link href="/otzaria-software" className="hover:text-primary">בית</Link>
+            <Link href="/" className="hover:text-primary">בית</Link>
             <span>›</span>
-            <Link href="/otzaria-software/docs" className="hover:text-primary">מדריכים</Link>
+            <Link href="/docs" className="hover:text-primary">מדריכים</Link>
             <span>›</span>
             <span className="text-on-surface">מדריך פיתוח</span>
           </div>

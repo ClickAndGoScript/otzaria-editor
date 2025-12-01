@@ -14,9 +14,9 @@ export default function InstallationTutorialPage() {
         <div className="container mx-auto max-w-6xl">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-on-surface/60 mb-6">
-            <Link href="/otzaria-software" className="hover:text-primary">בית</Link>
+            <Link href="/" className="hover:text-primary">בית</Link>
             <span>›</span>
-            <Link href="/otzaria-software/docs" className="hover:text-primary">מדריכים</Link>
+            <Link href="/docs" className="hover:text-primary">מדריכים</Link>
             <span>›</span>
             <span className="text-on-surface">מדריך הפעלת תוכנת אוצריא</span>
           </div>
@@ -426,7 +426,7 @@ export default function InstallationTutorialPage() {
                       <li><strong>חיפוש מקורב</strong> - חיפוש גמיש יותר</li>
                       <li><strong>חיפוש מתקדם</strong> - שימוש באופרטורים לוגיים</li>
                     </ul>
-                    <p className="mt-4">למידע מפורט על אפשרויות החיפוש, עיינו ב<Link href="/otzaria-software/docs/search" className="text-primary hover:underline">מדריך החיפוש המלא</Link>.</p>
+                    <p className="mt-4">למידע מפורט על אפשרויות החיפוש, עיינו ב<Link href="/docs/search" className="text-primary hover:underline">מדריך החיפוש המלא</Link>.</p>
                   </div>
                 </div>
               </motion.section>
@@ -573,7 +573,7 @@ export default function InstallationTutorialPage() {
                     <h4 className="text-2xl font-bold text-primary-dark mb-3">זקוק לעזרה נוספת?</h4>
                     <p className="mb-4">אם נתקלת בבעיה או שיש לך שאלה, בקר בדף השאלות הנפוצות או פנה אלינו דרך GitHub.</p>
                     <Link
-                      href="/otzaria-software/faq"
+                      href="/faq"
                       className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-lg hover:bg-accent transition-colors font-bold"
                     >
                       <span className="material-symbols-outlined">arrow_back</span>

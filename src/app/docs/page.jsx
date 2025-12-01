@@ -19,25 +19,25 @@ export default function DocsPage() {
 
   const tutorials = [
     {
-      href: '/otzaria-software/docs/installation',
+      href: '/docs/installation',
       icon: 'install_desktop',
       title: 'מדריך הפעלת תוכנת אוצריא',
       description: 'הוראות מפורטות להתקנה, הפעלה והוספת ספרייה - כולל טיפים ואפשרויות מתקדמות'
     },
     {
-      href: '/otzaria-software/docs/search',
+      href: '/docs/search',
       icon: 'search',
       title: 'מדריך חיפוש באוצריא',
       description: 'למד כיצד לחפש ביעילות - חיפוש מדויק, מקורב, סינון ספרים, והשלמת אותיות'
     },
     {
-      href: '/otzaria-software/docs/development',
+      href: '/docs/development',
       icon: 'code',
       title: 'מדריך פיתוח - עריכת אוצריא',
       description: 'למד כיצד לערוך ולשפר את תוכנת אוצריא בעצמך - גם ללא ידע מעמיק בתכנות'
     },
     {
-      href: '/otzaria-software/docs/dicta',
+      href: '/docs/dicta',
       icon: 'edit',
       title: 'מדריך לטיפול בספרי דיקטה',
       description: 'הדרכה מפורטת ליצירת כותרות וניווט בספרים - כולל כלים אוטומטיים והדגמות מעשיות'
