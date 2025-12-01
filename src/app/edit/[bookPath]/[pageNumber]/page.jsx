@@ -49,6 +49,7 @@ export default function EditPage() {
   const [imagePanelWidth, setImagePanelWidth] = useState(50) // אחוז רוחב של פאנל התמונה
   const [isResizing, setIsResizing] = useState(false)
   const [showInfoDialog, setShowInfoDialog] = useState(false)
+  const [layoutOrientation, setLayoutOrientation] = useState('vertical') // 'vertical' או 'horizontal'
 
   // טען הגדרות מ-localStorage
   useEffect(() => {
@@ -56,10 +57,12 @@ export default function EditPage() {
     const savedPrompt = localStorage.getItem('gemini_prompt')
     const savedModel = localStorage.getItem('gemini_model')
     const savedImagePanelWidth = localStorage.getItem('imagePanelWidth')
+    const savedLayoutOrientation = localStorage.getItem('layoutOrientation')
     if (savedApiKey) setUserApiKey(savedApiKey)
     if (savedPrompt) setCustomPrompt(savedPrompt)
     if (savedModel) setSelectedModel(savedModel)
     if (savedImagePanelWidth) setImagePanelWidth(parseFloat(savedImagePanelWidth))
+    if (savedLayoutOrientation) setLayoutOrientation(savedLayoutOrientation)
   }, [])
 
   useEffect(() => {
@@ -677,13 +680,21 @@ export default function EditPage() {
       if (!container) return
 
       const containerRect = container.getBoundingClientRect()
-      // חשב מימין לשמאל (RTL)
-      const mouseX = containerRect.right - e.clientX
-      const newWidth = (mouseX / containerRect.width) * 100
+      
+      let newSize
+      if (layoutOrientation === 'horizontal') {
+        // מצב אופקי - חשב לפי Y
+        const mouseY = e.clientY - containerRect.top
+        newSize = (mouseY / containerRect.height) * 100
+      } else {
+        // מצב אנכי - חשב מימין לשמאל (RTL)
+        const mouseX = containerRect.right - e.clientX
+        newSize = (mouseX / containerRect.width) * 100
+      }
 
       // הגבל בין 20% ל-80%
-      const clampedWidth = Math.min(Math.max(newWidth, 20), 80)
-      setImagePanelWidth(clampedWidth)
+      const clampedSize = Math.min(Math.max(newSize, 20), 80)
+      setImagePanelWidth(clampedSize)
     }
 
     const handleMouseUp = () => {
@@ -699,7 +710,7 @@ export default function EditPage() {
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isResizing, imagePanelWidth])
+  }, [isResizing, imagePanelWidth, layoutOrientation])
 
 
 
@@ -1370,6 +1381,20 @@ export default function EditPage() {
                   </span>
                 </button>
 
+                <button
+                  onClick={() => {
+                    const newOrientation = layoutOrientation === 'vertical' ? 'horizontal' : 'vertical'
+                    setLayoutOrientation(newOrientation)
+                    localStorage.setItem('layoutOrientation', newOrientation)
+                  }}
+                  className="w-8 h-8 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center"
+                  title={layoutOrientation === 'vertical' ? 'פריסה אנכית' : 'פריסה אופקית'}
+                >
+                  <span className="material-symbols-outlined text-base" style={{ transform: layoutOrientation === 'horizontal' ? 'rotate(90deg)' : 'none' }}>
+                    splitscreen
+                  </span>
+                </button>
+
                 <div className="w-px h-6 bg-gray-200"></div>
 
                 <button
@@ -1388,13 +1413,20 @@ export default function EditPage() {
         <div className="flex-1 flex flex-col overflow-hidden p-6">
           <div className="glass-strong rounded-xl border border-surface-variant flex-1 flex flex-col overflow-hidden">
             {/* Split Content Area */}
-            <div className="flex-1 flex overflow-hidden split-container" style={{ position: 'relative' }}>
+            <div 
+              className="flex-1 flex overflow-hidden split-container" 
+              style={{ 
+                position: 'relative',
+                flexDirection: layoutOrientation === 'horizontal' ? 'column' : 'row'
+              }}
+            >
               {/* Image Side */}
               <div
                 ref={imageContainerRef}
                 className="overflow-auto p-4"
                 style={{
-                  width: `${imagePanelWidth}%`,
+                  width: layoutOrientation === 'horizontal' ? '100%' : `${imagePanelWidth}%`,
+                  height: layoutOrientation === 'horizontal' ? `${imagePanelWidth}%` : 'auto',
                   overflow: 'auto',
                   flexShrink: 0,
                   scrollbarWidth: 'thin', // Firefox
@@ -1523,16 +1555,25 @@ export default function EditPage() {
 
               {/* Resizable Divider */}
               <div
-                className="relative flex items-center justify-center cursor-col-resize hover:bg-primary/10 transition-colors"
+                className={`relative flex items-center justify-center hover:bg-primary/10 transition-colors ${
+                  layoutOrientation === 'horizontal' ? 'cursor-row-resize' : 'cursor-col-resize'
+                }`}
                 style={{
-                  width: '8px',
+                  width: layoutOrientation === 'horizontal' ? '100%' : '8px',
+                  height: layoutOrientation === 'horizontal' ? '8px' : 'auto',
                   flexShrink: 0,
                   userSelect: 'none',
                   backgroundColor: isResizing ? 'rgba(107, 93, 79, 0.2)' : 'transparent'
                 }}
                 onMouseDown={handleResizeStart}
               >
-                <div className="absolute w-1 h-12 bg-surface-variant rounded-full"></div>
+                <div 
+                  className="absolute bg-surface-variant rounded-full"
+                  style={{
+                    width: layoutOrientation === 'horizontal' ? '12px' : '1px',
+                    height: layoutOrientation === 'horizontal' ? '1px' : '12px'
+                  }}
+                ></div>
               </div>
 
               {/* Text Editor Side */}
