@@ -405,14 +405,18 @@ function CardGridView({ items, onFileClick }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5">
       {files.map((file) => {
+        const totalPages = file.totalPages || 0
+        const completedPages = file.completedPages || 0
+        const progressPercentage = totalPages > 0 ? Math.round((completedPages / totalPages) * 100) : 0
+        
         return (
           <div
             key={file.id}
             onClick={() => onFileClick(file)}
-            className="group relative rounded-3xl p-6 cursor-pointer transition-all duration-200 shadow-md hover:shadow-xl border border-gray-200"
+            className="group relative rounded-3xl cursor-pointer transition-all duration-200 shadow-md hover:shadow-xl border border-gray-200 overflow-hidden flex flex-col"
             style={{ minHeight: '140px', backgroundColor: '#F5EFE7' }}
           >
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start justify-between gap-3 p-6 flex-1">
               <div className="flex-shrink-0 p-1">
                 <span className="material-symbols-outlined text-2xl" style={{ color: '#8B7355' }}>
                   description
@@ -433,6 +437,27 @@ function CardGridView({ items, onFileClick }) {
                   info
                 </span>
               </button>
+            </div>
+            
+            {/* פס התקדמות */}
+            <div className="px-6 pb-4">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium" style={{ color: '#8B7355' }}>
+                  {completedPages} / {totalPages}
+                </span>
+                <span className="text-xs font-bold" style={{ color: '#8B6F47' }}>
+                  {progressPercentage}%
+                </span>
+              </div>
+              <div className="w-full bg-white/50 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{ 
+                    width: `${progressPercentage}%`,
+                    backgroundColor: progressPercentage === 100 ? '#22c55e' : progressPercentage > 0 ? '#3b82f6' : '#9ca3af'
+                  }}
+                />
+              </div>
             </div>
           </div>
         )
