@@ -407,7 +407,11 @@ function CardGridView({ items, onFileClick }) {
       {files.map((file) => {
         const totalPages = file.totalPages || 0
         const completedPages = file.completedPages || 0
-        const progressPercentage = totalPages > 0 ? Math.round((completedPages / totalPages) * 100) : 0
+        const inProgressPages = file.inProgressPages || 0
+        const combinedPages = completedPages + inProgressPages
+        const completedPercentage = totalPages > 0 ? (completedPages / totalPages) * 100 : 0
+        const inProgressPercentage = totalPages > 0 ? (inProgressPages / totalPages) * 100 : 0
+        const totalPercentage = totalPages > 0 ? Math.round((combinedPages / totalPages) * 100) : 0
         
         return (
           <div
@@ -443,20 +447,29 @@ function CardGridView({ items, onFileClick }) {
             <div className="px-6 pb-4">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-medium" style={{ color: '#8B7355' }}>
-                  {completedPages} / {totalPages}
+                  {combinedPages} / {totalPages}
                 </span>
                 <span className="text-xs font-bold" style={{ color: '#8B6F47' }}>
-                  {progressPercentage}%
+                  {totalPercentage}%
                 </span>
               </div>
               <div className="w-full bg-white/50 rounded-full h-2 overflow-hidden">
-                <div 
-                  className="h-full rounded-full transition-all duration-300"
-                  style={{ 
-                    width: `${progressPercentage}%`,
-                    backgroundColor: progressPercentage === 100 ? '#22c55e' : progressPercentage > 0 ? '#3b82f6' : '#9ca3af'
-                  }}
-                />
+                <div className="h-full flex">
+                  <div 
+                    className="h-full transition-all duration-300"
+                    style={{ 
+                      width: `${completedPercentage}%`,
+                      backgroundColor: '#22c55e'
+                    }}
+                  />
+                  <div 
+                    className="h-full transition-all duration-300"
+                    style={{ 
+                      width: `${inProgressPercentage}%`,
+                      backgroundColor: '#3b82f6'
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
