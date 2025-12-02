@@ -53,14 +53,17 @@ export default function LibraryBooksPage() {
     loadLibrary()
   }, [])
 
-  // חישוב סטטיסטיקות
+  // חישוב סטטיסטיקות - ספירת עמודים לפי סטטוס
   const stats = useMemo(() => {
     const counts = { completed: 0, 'in-progress': 0, available: 0 }
     
     function count(items) {
       items.forEach(item => {
-        if (item.type === 'file' && item.status) {
-          counts[item.status]++
+        if (item.type === 'file') {
+          // ספור עמודים לפי סטטוס, לא ספרים
+          counts.completed += item.completedPages || 0
+          counts['in-progress'] += item.inProgressPages || 0
+          counts.available += item.availablePages || 0
         }
         if (item.children) {
           count(item.children)
@@ -254,7 +257,7 @@ export default function LibraryBooksPage() {
                   <div className="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center mx-auto mb-2">
                     <span className="material-symbols-outlined text-xl text-green-700">check_circle</span>
                   </div>
-                  <p className="text-xs font-medium text-green-700 mb-1">הושלמו</p>
+                  <p className="text-xs font-medium text-green-700 mb-1">עמודים שהושלמו</p>
                   <p className="text-2xl font-bold text-green-800">{stats.completed}</p>
                 </div>
               </div>
@@ -264,7 +267,7 @@ export default function LibraryBooksPage() {
                   <div className="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center mx-auto mb-2">
                     <span className="material-symbols-outlined text-xl text-blue-700">edit</span>
                   </div>
-                  <p className="text-xs font-medium text-blue-700 mb-1">בטיפול</p>
+                  <p className="text-xs font-medium text-blue-700 mb-1">עמודים בטיפול</p>
                   <p className="text-2xl font-bold text-blue-800">{stats['in-progress']}</p>
                 </div>
               </div>
@@ -274,7 +277,7 @@ export default function LibraryBooksPage() {
                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-2">
                     <span className="material-symbols-outlined text-xl text-gray-700">description</span>
                   </div>
-                  <p className="text-xs font-medium text-gray-700 mb-1">זמינים</p>
+                  <p className="text-xs font-medium text-gray-700 mb-1">עמודים זמינים</p>
                   <p className="text-2xl font-bold text-gray-800">{stats.available}</p>
                 </div>
               </div>

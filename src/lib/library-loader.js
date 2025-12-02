@@ -38,10 +38,13 @@ export async function loadLibraryStructure(forceRefresh = false) {
     logger.log('🚀 Loading library structure from MongoDB...')
     
     // קרא את books.json מ-MongoDB
-    const { readJSON } = await import('./storage.js')
-    const booksData = await readJSON('data/books.json')
+    const { readJSON, listFiles } = await import('./storage.js')
     
-    if (!booksData || booksData.length === 0) {
+    // קרא את כל קבצי העמודים כדי לחשב סטטוס אמיתי
+    const files = await listFiles('data/pages/')
+    const jsonFiles = files.filter(f => f.pathname.endsWith('.json'))
+    
+    if (!jsonFiles || jsonFiles.length === 0) {
       logger.warn('⚠️  No books found in MongoDB')
       
       // נסה לסרוק מהתיקייה המקומית
@@ -56,19 +59,51 @@ export async function loadLibraryStructure(forceRefresh = false) {
       return []
     }
     
-    logger.log(`📚 Found ${booksData.length} books in MongoDB`)
+    logger.log(`📚 Found ${jsonFiles.length} books in MongoDB`)
     
-    // המר לפורמט הנכון
-    const structure = booksData.map(book => ({
-      id: book.id || book.name,
-      name: book.name,
-      type: 'file',
-      status: 'available',
-      lastEdit: book.updatedAt || book.createdAt,
-      editor: null,
-      path: book.name,
-      pageCount: book.totalPages || 0,
-    }))
+    // המר לפורמט הנכון עם חישוב סטטוס אמיתי
+    const structure = []
+    
+    for (const file of jsonFiles) {
+      try {
+        const bookName = file.pathname.split('/').pop().replace('.json', '')
+        const pages = await readJSON(file.pathname)
+        
+        if (!pages || !Array.isArray(pages)) {
+          continue
+        }
+        
+        const totalPages = pages.length
+        const completedPages = pages.filter(p => p.status === 'completed').length
+        const inProgressPages = pages.filter(p => p.status === 'in-progress').length
+        const availablePages = pages.filter(p => p.status === 'available').length
+        
+        // חשב סטטוס של הספר (לתצוגה בלבד)
+        let status = 'available'
+        if (completedPages === totalPages && totalPages > 0) {
+          status = 'completed'
+        } else if (completedPages > 0 || inProgressPages > 0) {
+          status = 'in-progress'
+        }
+        
+        structure.push({
+          id: bookName,
+          name: bookName,
+          type: 'file',
+          status: status,
+          lastEdit: file.uploadedAt || new Date().toISOString(),
+          editor: null,
+          path: bookName,
+          pageCount: totalPages,
+          completedPages: completedPages,
+          inProgressPages: inProgressPages,
+          availablePages: availablePages,
+          totalPages: totalPages,
+        })
+      } catch (error) {
+        logger.error(`Error processing book ${file.pathname}:`, error)
+      }
+    }
 
     // שמור ב-cache
     cachedStructure = structure
