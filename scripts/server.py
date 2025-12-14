@@ -211,7 +211,7 @@ def upload_to_github_requests(output_dir, book_id, book_name, job_id):
         return False
 
 def save_mapping(book_id, book_name, total_pages, job_id):
-    """שומר מיפוי לקובץ מקומי"""
+    """שומר מיפוי לקובץ מקומי ול-MongoDB"""
     try:
         jobs[job_id]['status'] = 'saving'
         jobs[job_id]['message'] = 'שומר מיפוי...'
@@ -234,6 +234,10 @@ def save_mapping(book_id, book_name, total_pages, job_id):
         with open(mapping_file, 'w', encoding='utf-8') as f:
             json.dump(mapping, f, ensure_ascii=False, indent=2)
         
+        # שמור גם ל-MongoDB
+        jobs[job_id]['message'] = 'שומר ל-MongoDB...'
+        save_to_mongodb(book_id, book_name, total_pages)
+        
         jobs[job_id]['status'] = 'completed'
         jobs[job_id]['message'] = 'התהליך הושלם בהצלחה!'
         jobs[job_id]['book_id'] = book_id
@@ -244,6 +248,98 @@ def save_mapping(book_id, book_name, total_pages, job_id):
         jobs[job_id]['status'] = 'error'
         jobs[job_id]['error'] = f'שגיאה בשמירה: {str(e)}'
         return False
+
+
+def save_to_mongodb(book_id, book_name, total_pages):
+    """שומר את המיפוי, קובץ העמודים ורשימת הספרים ל-MongoDB"""
+    try:
+        from pymongo import MongoClient
+        
+        database_url = os.getenv('DATABASE_URL')
+        if not database_url:
+            print('⚠️  DATABASE_URL not set, skipping MongoDB save')
+            return
+        
+        client = MongoClient(database_url)
+        db = client['otzaria']
+        collection = db['files']
+        
+        now = time.strftime('%Y-%m-%dT%H:%M:%SZ')
+        
+        # 1. עדכן book-mapping.json
+        mapping_path = 'data/book-mapping.json'
+        mapping_doc = collection.find_one({'path': mapping_path})
+        mapping = mapping_doc['data'] if mapping_doc and 'data' in mapping_doc else {}
+        mapping[book_id] = book_name
+        
+        collection.update_one(
+            {'path': mapping_path},
+            {'$set': {'path': mapping_path, 'data': mapping, 'updatedAt': now}},
+            upsert=True
+        )
+        print(f'✅ Updated book-mapping.json: {book_id} -> {book_name}')
+        
+        # 2. צור קובץ עמודים
+        pages = []
+        for i in range(1, total_pages + 1):
+            pages.append({
+                'number': i,
+                'status': 'available',
+                'claimedBy': None,
+                'claimedById': None,
+                'claimedAt': None,
+                'completedAt': None,
+                'thumbnail': f'github:{book_id}_page-{i}.jpg'
+            })
+        
+        pages_path = f'data/pages/{book_name}.json'
+        collection.update_one(
+            {'path': pages_path},
+            {'$set': {'path': pages_path, 'data': pages, 'updatedAt': now}},
+            upsert=True
+        )
+        print(f'✅ Created {pages_path} with {total_pages} pages')
+        
+        # 3. עדכן books.json - רשימת הספרים הזמינים
+        books_path = 'data/books.json'
+        books_doc = collection.find_one({'path': books_path})
+        books = books_doc['data'] if books_doc and 'data' in books_doc else []
+        
+        # בדוק אם הספר כבר קיים
+        existing_index = next((i for i, b in enumerate(books) if b.get('name') == book_name or b.get('id') == book_name), -1)
+        
+        book_data = {
+            'id': book_name,
+            'name': book_name,
+            'totalPages': total_pages,
+            'status': 'available',
+            'createdAt': now,
+            'updatedAt': now
+        }
+        
+        if existing_index >= 0:
+            # עדכן ספר קיים
+            books[existing_index] = {**books[existing_index], **book_data}
+            print(f'✅ Updated existing book in books.json')
+        else:
+            # הוסף ספר חדש
+            books.append(book_data)
+            print(f'✅ Added new book to books.json')
+        
+        collection.update_one(
+            {'path': books_path},
+            {'$set': {'path': books_path, 'data': books, 'updatedAt': now}},
+            upsert=True
+        )
+        
+        client.close()
+        print(f'🎉 Book "{book_name}" fully saved to MongoDB!')
+        
+    except ImportError:
+        print('⚠️  pymongo not installed, skipping MongoDB save')
+        print('   Install with: pip install pymongo')
+    except Exception as e:
+        print(f'⚠️  MongoDB save failed: {e}')
 
 
 def process_pdfs(pdf_paths, book_name, job_id):
@@ -376,6 +472,16 @@ if __name__ == '__main__':
     print(f'📍 כתובת: http://localhost:5000')
     print(f'🔑 GitHub: {GITHUB_OWNER}/{GITHUB_REPO}')
     print(f'📦 תומך במספר קבצי PDF לספר אחד')
+    print(f'🗄️  MongoDB: {"מוגדר" if os.getenv("DATABASE_URL") else "לא מוגדר"}')
+    
+    # בדוק אם pymongo מותקן
+    try:
+        import pymongo
+        print(f'✅ pymongo מותקן')
+    except ImportError:
+        print(f'⚠️  pymongo לא מותקן - הספרים לא יישמרו ב-MongoDB')
+        print(f'   התקן עם: pip install pymongo')
+    
     print('=' * 60)
     print()
     
