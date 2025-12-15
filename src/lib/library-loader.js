@@ -125,7 +125,7 @@ export async function loadLibraryStructure(forceRefresh = false) {
 /**
  * סריקת תמונות מ-GitHub (לא בשימוש - קוראים מ-MongoDB)
  */
-async function scanBlobThumbnails() {
+async function _scanBlobThumbnails() {
   try {
     logger.log('🔍 Scanning GitHub for thumbnails...')
     const blobs = await listFiles('thumbnails')
@@ -352,7 +352,7 @@ export function pageImageExists(bookName, pageNumber) {
     }
     
     return false
-  } catch (error) {
+  } catch {
     return false
   }
 }

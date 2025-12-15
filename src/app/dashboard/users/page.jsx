@@ -3,7 +3,6 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import Header from '@/components/Header'
 import { getAvatarColor, getInitial } from '@/lib/avatar-colors'
 
@@ -34,7 +33,7 @@ export default function UsersManagementPage() {
       } else {
         setError(data.error)
       }
-    } catch (err) {
+    } catch {
       setError('שגיאה בטעינת משתמשים')
     } finally {
       setLoading(false)
@@ -55,7 +54,7 @@ export default function UsersManagementPage() {
         const data = await response.json()
         alert(data.error)
       }
-    } catch (err) {
+    } catch {
       alert('שגיאה בעדכון תפקיד')
     }
   }
@@ -76,7 +75,7 @@ export default function UsersManagementPage() {
         const data = await response.json()
         alert(data.error)
       }
-    } catch (err) {
+    } catch {
       alert('שגיאה במחיקת משתמש')
     }
   }

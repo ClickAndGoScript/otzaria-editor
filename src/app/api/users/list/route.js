@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { readJSON, listFiles } from '@/lib/storage'
 
-export async function GET(request) {
+export async function GET() {
   try {
     // קרא משתמשים
     const users = await readJSON('data/users.json')

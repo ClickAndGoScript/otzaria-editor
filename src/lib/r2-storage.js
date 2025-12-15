@@ -328,7 +328,7 @@ export async function fileExists(path) {
     })
     
     return fileList.data.files.length > 0
-  } catch (error) {
+  } catch {
     return false
   }
 }

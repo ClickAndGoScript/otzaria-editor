@@ -107,7 +107,7 @@ export async function getUserById(id) {
 // פונקציה לקבלת כל המשתמשים (למנהלים בלבד)
 export async function getAllUsers() {
   const users = await getUsers()
-  return users.map(({ password, ...user }) => user)
+  return users.map(({ password: _password, ...user }) => user)
 }
 
 // פונקציה לעדכון תפקיד משתמש

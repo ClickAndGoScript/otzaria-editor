@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { saveText, readText } from '@/lib/storage'
-import path from 'path'
 
 export async function POST(request) {
   try {

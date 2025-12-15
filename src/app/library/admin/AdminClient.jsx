@@ -18,7 +18,7 @@ export default function AdminClient({ session }) {
     const [deleteConfirm, setDeleteConfirm] = useState(null)
     const [showAddBook, setShowAddBook] = useState(false)
     const [newBookName, setNewBookName] = useState('')
-    const [addingBook, setAddingBook] = useState(false)
+    const [_addingBook, setAddingBook] = useState(false)
     const [pages, setPages] = useState([])
     const [pagesFilter, setPagesFilter] = useState({ status: '', book: '', userId: '' })
     const [editingPage, setEditingPage] = useState(null)
@@ -339,7 +339,7 @@ export default function AdminClient({ session }) {
         }
     }
 
-    const handleAddBook = async () => {
+    const _handleAddBook = async () => {
         if (!newBookName.trim()) {
             alert('נא להזין שם ספר')
             return

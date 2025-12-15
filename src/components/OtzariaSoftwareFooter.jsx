@@ -1,5 +1,3 @@
-import Link from 'next/link'
-
 export default function OtzariaSoftwareFooter() {
   return (
     <footer className="bg-gradient-to-b from-surface to-surface-variant py-12 px-4 mt-20">

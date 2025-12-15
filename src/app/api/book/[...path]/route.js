@@ -10,7 +10,7 @@ const THUMBNAILS_PATH = path.join(process.cwd(), 'public', 'thumbnails')
 // הגדר את runtime ל-nodejs (לא edge) כדי לתמוך ב-fs
 export const runtime = 'nodejs'
 
-export async function POST(request, { params }) {
+export async function POST(request) {
     try {
         const body = await request.json()
         const { action, bookPath, pageNumber, userId, userName } = body
@@ -164,7 +164,8 @@ async function handleCompletePage(bookPath, pageNumber, userId) {
     }
 }
 
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+    const params = await props.params
     try {
         console.log('📥 API called')
         console.log('   Full params:', JSON.stringify(params))
@@ -299,7 +300,7 @@ async function createPagesData(numPages, existingData = [], bookName) {
         // מצא את תמונת העמוד
         let thumbnail = null
         if (USE_BLOB) {
-            thumbnail = findPageThumbnailFromBlobs(thumbnails, i, bookName)
+            thumbnail = findPageThumbnailFromBlobs(thumbnails, i)
             if (!thumbnail) {
                 console.warn(`⚠️  No thumbnail found for page ${i}`)
             }
@@ -332,7 +333,7 @@ async function createPagesData(numPages, existingData = [], bookName) {
 }
 
 // מציאת תמונת עמוד מרשימת blobs (עם מיפוי)
-function findPageThumbnailFromBlobs(thumbnails, pageNumber, bookName) {
+function findPageThumbnailFromBlobs(thumbnails, pageNumber) {
     // פורמט חדש: book_abc123_page-1.jpg
     // thumbnails כבר מסוננים לפי ספר, אז פשוט נחפש את המספר
     

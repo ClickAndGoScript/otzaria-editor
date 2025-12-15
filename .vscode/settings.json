@@ -1,4 +1,7 @@
 {
     "javascript.autoClosingTags": false,
-    "kiroAgent.configureMCP": "Disabled"
+    "kiroAgent.configureMCP": "Disabled",
+    "eslint.workingDirectories": ["."],
+    "eslint.validate": ["javascript", "javascriptreact"],
+    "eslint.lintTask.enable": true
 }

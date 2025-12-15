@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '../../auth/[...nextauth]/route'
 import { listFiles, readJSON } from '@/lib/storage'
 
-export async function GET(request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     

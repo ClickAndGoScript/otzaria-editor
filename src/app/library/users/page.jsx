@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { getAvatarColor, getInitial } from '@/lib/avatar-colors'
@@ -71,7 +69,7 @@ export default function UsersPage() {
     return `הצטרף לפני ${Math.floor(diffDays / 365)} שנים`
   }
 
-  const getRankBadge = (points) => {
+  const _getRankBadge = (points) => {
     if (points >= 1000) return { name: 'מומחה', color: 'bg-purple-100 text-purple-800 border-purple-300', icon: 'workspace_premium' }
     if (points >= 500) return { name: 'מתקדם', color: 'bg-blue-100 text-blue-800 border-blue-300', icon: 'star' }
     if (points >= 100) return { name: 'פעיל', color: 'bg-green-100 text-green-800 border-green-300', icon: 'trending_up' }

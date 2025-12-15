@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { getUserByEmailOrUsername, verifyPassword } from '@/lib/auth'
-import { authLimiter, getClientIp } from '@/lib/rate-limit'
+import { authLimiter } from '@/lib/rate-limit'
 
 export const authOptions = {
   providers: [
@@ -11,7 +11,7 @@ export const authOptions = {
         identifier: { label: 'Email or Username', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials, req) {
+      async authorize(credentials) {
         if (!credentials?.identifier || !credentials?.password) {
           throw new Error('נא למלא את כל השדות')
         }

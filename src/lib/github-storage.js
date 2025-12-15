@@ -82,7 +82,7 @@ export async function uploadImage(imageBuffer, fileName) {
 }
 
 // שמירת תמונה
-export async function saveImage(path, imageBuffer, contentType = 'image/jpeg') {
+export async function saveImage(path, imageBuffer, _contentType = 'image/jpeg') {
   const fileName = path.replace(/\//g, '_') // המר / ל-_
   const result = await uploadImage(imageBuffer, fileName)
   return { url: result.url }
@@ -136,7 +136,7 @@ export async function getBookNameFromId(bookId) {
 // המר שם עברי ל-ID באנגלית
 export async function getBookIdFromName(bookName) {
   const mapping = await loadBookMapping()
-  const entry = Object.entries(mapping).find(([id, name]) => name === bookName)
+  const entry = Object.entries(mapping).find(([, name]) => name === bookName)
   return entry ? entry[0] : null
 }
 

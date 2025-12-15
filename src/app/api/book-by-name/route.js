@@ -110,7 +110,7 @@ async function createPagesData(numPages, existingData = [], bookName) {
         // טען מיפוי ספרים
         const mapping = await readJSON('data/book-mapping.json')
         console.log('📋 Mapping:', mapping)
-        bookId = Object.entries(mapping || {}).find(([id, name]) => name === bookName)?.[0]
+        bookId = Object.entries(mapping || {}).find(([, name]) => name === bookName)?.[0]
         console.log(`📚 Book ID for "${bookName}": ${bookId}`)
         
         if (bookId) {
@@ -168,7 +168,7 @@ async function createPagesData(numPages, existingData = [], bookName) {
     return pagesData
 }
 
-function findPageThumbnailFromBlobs(thumbnails, pageNumber, bookName) {
+function findPageThumbnailFromBlobs(thumbnails, pageNumber, _bookName) {
     const possibleNames = [
         `page-${pageNumber}.jpg`,
         `page-${pageNumber}.jpeg`,
@@ -225,7 +225,7 @@ async function getPageCountFromThumbnails(bookName) {
             }
             
             // מצא את ה-ID של הספר
-            const bookId = Object.entries(mapping).find(([id, name]) => name === bookName)?.[0]
+            const bookId = Object.entries(mapping).find(([, name]) => name === bookName)?.[0]
             if (!bookId) {
                 console.error(`❌ No book ID found for: ${bookName}`)
                 return null

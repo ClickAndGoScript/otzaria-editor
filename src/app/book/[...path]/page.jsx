@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { getAvatarColor, getInitial } from '@/lib/avatar-colors'
 import Header from '@/components/Header'
 
 const pageStatusConfig = {
@@ -672,7 +671,7 @@ function ConfirmDialog({ pageNumber, userName, onConfirm, onCancel }) {
 }
 
 // Upload Dialog Component
-function UploadDialog({ pageNumber, bookName, onConfirm, onSkip, onCancel }) {
+function UploadDialog({ pageNumber, onConfirm, onSkip, onCancel }) {
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onCancel}>
       <div className="glass-strong rounded-2xl p-8 max-w-md w-full" onClick={(e) => e.stopPropagation()}>

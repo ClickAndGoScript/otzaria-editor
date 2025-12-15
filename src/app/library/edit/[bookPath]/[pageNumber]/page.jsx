@@ -18,7 +18,7 @@ export default function EditPage() {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [saving, setSaving] = useState(false)
+  const [_saving, setSaving] = useState(false)
   const [twoColumns, setTwoColumns] = useState(false)
   const [leftColumn, setLeftColumn] = useState('')
   const [rightColumn, setRightColumn] = useState('')
@@ -83,7 +83,7 @@ export default function EditPage() {
     }
   }
 
-  const handleSave = async () => {
+  const _handleSave = async () => {
     setSaving(true)
     
     try {

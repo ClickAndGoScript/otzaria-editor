@@ -158,7 +158,7 @@ export async function fileExists(path) {
     
     const doc = await collection.findOne({ path })
     return !!doc
-  } catch (error) {
+  } catch {
     return false
   }
 }

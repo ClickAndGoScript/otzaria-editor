@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { getAvatarColor, getInitial } from '@/lib/avatar-colors'
 
 export default function EditPage() {
@@ -19,7 +18,7 @@ export default function EditPage() {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [saving, setSaving] = useState(false)
+
   const [twoColumns, setTwoColumns] = useState(false)
   const [leftColumn, setLeftColumn] = useState('')
   const [rightColumn, setRightColumn] = useState('')
@@ -121,37 +120,7 @@ export default function EditPage() {
     }
   }
 
-  const handleSave = async () => {
-    setSaving(true)
 
-    try {
-      const response = await fetch('/api/page-content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bookPath,
-          pageNumber,
-          content,
-          leftColumn,
-          rightColumn,
-          twoColumns
-        })
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        alert('✅ הטקסט נשמר בהצלחה!')
-      } else {
-        alert('❌ שגיאה בשמירה')
-      }
-    } catch (error) {
-      console.error('Error saving:', error)
-      alert('❌ שגיאה בשמירה')
-    } finally {
-      setSaving(false)
-    }
-  }
 
   const handleAutoSave = (text) => {
     setContent(text)
@@ -294,7 +263,6 @@ export default function EditPage() {
   }
 
   const getImageCoordinates = (e, img) => {
-    const imgRect = img.getBoundingClientRect()
     const container = img.parentElement
     const containerRect = container.getBoundingClientRect()
 
@@ -302,14 +270,8 @@ export default function EditPage() {
     const containerX = e.clientX - containerRect.left
     const containerY = e.clientY - containerRect.top
 
-    // התמונה הטבעית (לפני scale)
-    const naturalWidth = img.naturalWidth
-    const naturalHeight = img.naturalHeight
-
     // גודל התמונה המוצגת (אחרי scale)
     const scale = imageZoom / 100
-    const scaledWidth = naturalWidth * scale
-    const scaledHeight = naturalHeight * scale
 
     // בגלל RTL, התמונה מתחילה מימין (transformOrigin: 'top right')
     // צריך לחשב את המרחק מהקצה הימני של הקונטיינר
@@ -341,11 +303,11 @@ export default function EditPage() {
 
     // בדוק שהלחיצה היא בתוך התמונה
     const scale = imageZoom / 100
-    const scaledWidth = img.naturalWidth * scale
-    const scaledHeight = img.naturalHeight * scale
+    const _scaledWidth = img.naturalWidth * scale
+    const _scaledHeight = img.naturalHeight * scale
 
     if (coords.displayX < 0 || coords.displayY < 0 ||
-      coords.displayX > scaledWidth || coords.displayY > scaledHeight) return
+      coords.displayX > _scaledWidth || coords.displayY > _scaledHeight) return
 
     setSelectionStart(coords)
     setSelectionEnd(coords)
@@ -427,7 +389,6 @@ export default function EditPage() {
 
     const container = e.currentTarget
     const containerRect = container.getBoundingClientRect()
-    const scale = imageZoom / 100
 
     // חשב את המלבן הסופי
     // displayX/Y הם כבר מהכיוון הנכון (מימין לשמאל)
@@ -723,7 +684,7 @@ export default function EditPage() {
     setIsOcrProcessing(true)
 
     try {
-      const methodName = ocrMethod === 'gemini' ? 'Gemini AI' : 'Tesseract OCR'
+      
 
       const progressDiv = document.createElement('div')
       progressDiv.id = 'ocr-progress'
@@ -828,7 +789,7 @@ export default function EditPage() {
     }
   }
 
-  const handleOCR = async () => {
+  const _handleOCR = async () => {
     if (!thumbnailUrl) {
       alert('❌ אין תמונה זמינה לעיבוד OCR')
       return
@@ -911,7 +872,8 @@ export default function EditPage() {
 
     } catch (error) {
       console.error('OCR Error:', error)
-      alert(`❌ שגיאה בעיבוד ${methodName}: ` + error.message)
+      const errorMethodName = ocrMethod === 'gemini' ? 'Gemini AI' : 'Tesseract OCR'
+      alert(`❌ שגיאה בעיבוד ${errorMethodName}: ` + error.message)
 
       // הסר הודעת התקדמות במקרה של שגיאה
       const progressDiv = document.getElementById('ocr-progress')
@@ -1487,7 +1449,7 @@ export default function EditPage() {
                     {isSelectionMode && selectionStart && selectionEnd && (() => {
                       const container = imageContainerRef.current
                       if (!container) return null
-                      const containerRect = container.getBoundingClientRect()
+                      const _containerRect = container.getBoundingClientRect()
 
                       const minDisplayX = Math.min(selectionStart.displayX, selectionEnd.displayX)
                       const maxDisplayX = Math.max(selectionStart.displayX, selectionEnd.displayX)

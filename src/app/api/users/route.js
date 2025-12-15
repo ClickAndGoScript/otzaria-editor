@@ -29,7 +29,7 @@ export async function GET(request) {
 
     const users = await getAllUsers()
     return NextResponse.json({ users })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'שגיאה בטעינת משתמשים' },
       { status: 500 }
@@ -71,7 +71,7 @@ export async function PATCH(request) {
         { status: 404 }
       )
     }
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'שגיאה בעדכון משתמש' },
       { status: 500 }
@@ -115,7 +115,7 @@ export async function DELETE(request) {
         { status: 404 }
       )
     }
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'שגיאה במחיקת משתמש' },
       { status: 500 }

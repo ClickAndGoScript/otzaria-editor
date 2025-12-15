@@ -30,7 +30,7 @@ export async function POST(request) {
 
     // בדוק אם הספר קיים ב-GitHub
     const mapping = await loadBookMapping()
-    const bookId = Object.entries(mapping).find(([id, name]) => name === bookName)?.[0]
+    const bookId = Object.entries(mapping).find(([, name]) => name === bookName)?.[0]
     
     if (!bookId) {
       return NextResponse.json(

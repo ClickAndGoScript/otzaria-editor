@@ -60,7 +60,7 @@ export default function ChangePasswordForm() {
       } else {
         setMessage({ type: 'error', text: result.error || 'שגיאה בשינוי הסיסמה' })
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'שגיאה בשינוי הסיסמה' })
     } finally {
       setLoading(false)
