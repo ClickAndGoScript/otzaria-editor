@@ -17,8 +17,6 @@ export default function AdminClient({ session }) {
     const [editingUser, setEditingUser] = useState(null)
     const [deleteConfirm, setDeleteConfirm] = useState(null)
     const [showAddBook, setShowAddBook] = useState(false)
-    const [newBookName, setNewBookName] = useState('')
-    const [_addingBook, setAddingBook] = useState(false)
     const [pages, setPages] = useState([])
     const [pagesFilter, setPagesFilter] = useState({ status: '', book: '', userId: '' })
     const [editingPage, setEditingPage] = useState(null)
@@ -336,46 +334,6 @@ export default function AdminClient({ session }) {
         } catch (error) {
             console.error('Error deleting book:', error)
             alert('שגיאה במחיקת ספר')
-        }
-    }
-
-    const _handleAddBook = async () => {
-        if (!newBookName.trim()) {
-            alert('נא להזין שם ספר')
-            return
-        }
-
-        try {
-            setAddingBook(true)
-            const response = await fetch('/api/admin/books/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bookName: newBookName.trim() })
-            })
-
-            const result = await response.json()
-            if (result.success) {
-                // רענן את הרשימה מהשרת
-                const booksRes = await fetch('/api/library/list?refresh=true')
-                const booksData = await booksRes.json()
-                if (booksData.success) {
-                    setBooks(booksData.books)
-                } else {
-                    // אם נכשל, לפחות הוסף את הספר החדש
-                    setBooks([...books, result.book])
-                }
-
-                setNewBookName('')
-                setShowAddBook(false)
-                alert(result.message)
-            } else {
-                alert(result.error || 'שגיאה בהוספת ספר')
-            }
-        } catch (error) {
-            console.error('Error adding book:', error)
-            alert('שגיאה בהוספת ספר')
-        } finally {
-            setAddingBook(false)
         }
     }
 

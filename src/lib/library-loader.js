@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { listFiles } from './storage.js'
+
 import { logger } from './logger.js'
 
 // נתיב לתיקיית התמונות המקומית
@@ -118,67 +118,6 @@ export async function loadLibraryStructure(forceRefresh = false) {
       logger.log('⚠️  Returning stale cache due to error')
       return cachedStructure
     }
-    return []
-  }
-}
-
-/**
- * סריקת תמונות מ-GitHub (לא בשימוש - קוראים מ-MongoDB)
- */
-async function _scanBlobThumbnails() {
-  try {
-    logger.log('🔍 Scanning GitHub for thumbnails...')
-    const blobs = await listFiles('thumbnails')
-    logger.log('📦 Total blobs found:', blobs.length)
-    
-    // טען מיפוי
-    const { readJSON } = await import('./storage.js')
-    const mapping = await readJSON('data/book-mapping.json')
-    
-    if (!mapping) {
-      logger.warn('⚠️  No book mapping found')
-      return []
-    }
-    
-    const books = new Map()
-
-    for (const blob of blobs) {
-      // שם קובץ לדוגמה: book_abc123_page-1.jpg
-      const fileName = blob.pathname.split('/').pop()
-      
-      // חלץ את ה-book ID
-      const match = fileName.match(/^(book_[a-f0-9]+)_/)
-      if (!match) continue
-      
-      const bookId = match[1]
-      const bookName = mapping[bookId]
-      
-      if (!bookName) continue
-      
-      if (!books.has(bookName)) {
-        const uploadDate = blob.uploadedAt instanceof Date 
-          ? blob.uploadedAt.toISOString().split('T')[0]
-          : new Date().toISOString().split('T')[0]
-          
-        books.set(bookName, {
-          id: bookName,
-          name: bookName,
-          type: 'file',
-          status: 'available',
-          lastEdit: uploadDate,
-          editor: null,
-          path: bookName,
-          pageCount: 0,
-        })
-      }
-
-      books.get(bookName).pageCount++
-    }
-
-    logger.log('📚 Total books found:', books.size)
-    return Array.from(books.values())
-  } catch (error) {
-    logger.error('❌ Error scanning thumbnails:', error)
     return []
   }
 }

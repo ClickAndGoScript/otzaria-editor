@@ -18,7 +18,7 @@ export default function EditPage() {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [_saving, setSaving] = useState(false)
+
   const [twoColumns, setTwoColumns] = useState(false)
   const [leftColumn, setLeftColumn] = useState('')
   const [rightColumn, setRightColumn] = useState('')
@@ -80,38 +80,6 @@ export default function EditPage() {
       setError(err.message || 'שגיאה בטעינת העמוד')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const _handleSave = async () => {
-    setSaving(true)
-    
-    try {
-      const response = await fetch('/api/page-content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bookPath,
-          pageNumber,
-          content,
-          leftColumn,
-          rightColumn,
-          twoColumns
-        })
-      })
-      
-      const result = await response.json()
-      
-      if (result.success) {
-        alert('✅ הטקסט נשמר בהצלחה!')
-      } else {
-        alert('❌ שגיאה בשמירה')
-      }
-    } catch (error) {
-      console.error('Error saving:', error)
-      alert('❌ שגיאה בשמירה')
-    } finally {
-      setSaving(false)
     }
   }
 
