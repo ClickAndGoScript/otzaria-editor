@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
 import OtzariaSoftwareHeader from '@/components/OtzariaSoftwareHeader'
 import OtzariaSoftwareFooter from '@/components/OtzariaSoftwareFooter'
 

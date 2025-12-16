@@ -303,11 +303,11 @@ export default function EditPage() {
 
     // בדוק שהלחיצה היא בתוך התמונה
     const scale = imageZoom / 100
-    const _scaledWidth = img.naturalWidth * scale
-    const _scaledHeight = img.naturalHeight * scale
+    const scaledWidth = img.naturalWidth * scale
+    const scaledHeight = img.naturalHeight * scale
 
     if (coords.displayX < 0 || coords.displayY < 0 ||
-      coords.displayX > _scaledWidth || coords.displayY > _scaledHeight) return
+      coords.displayX > scaledWidth || coords.displayY > scaledHeight) return
 
     setSelectionStart(coords)
     setSelectionEnd(coords)
@@ -1355,7 +1355,6 @@ export default function EditPage() {
                     {isSelectionMode && selectionStart && selectionEnd && (() => {
                       const container = imageContainerRef.current
                       if (!container) return null
-                      const _containerRect = container.getBoundingClientRect()
 
                       const minDisplayX = Math.min(selectionStart.displayX, selectionEnd.displayX)
                       const maxDisplayX = Math.max(selectionStart.displayX, selectionEnd.displayX)

@@ -48,7 +48,7 @@ export async function uploadImage(imageBuffer, name) {
 }
 
 // שמירת תמונה (מחזיר רק URL)
-export async function saveImage(path, imageBuffer, _contentType = 'image/jpeg') {
+export async function saveImage(path, imageBuffer) {
   const result = await uploadImage(imageBuffer, path)
   return { url: result.url }
 }

@@ -82,7 +82,7 @@ export async function uploadImage(imageBuffer, fileName) {
 }
 
 // שמירת תמונה
-export async function saveImage(path, imageBuffer, _contentType = 'image/jpeg') {
+export async function saveImage(path, imageBuffer) {
   const fileName = path.replace(/\//g, '_') // המר / ל-_
   const result = await uploadImage(imageBuffer, fileName)
   return { url: result.url }

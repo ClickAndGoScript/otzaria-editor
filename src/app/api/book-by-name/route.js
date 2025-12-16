@@ -136,10 +136,10 @@ async function createPagesData(numPages, existingData = [], bookName) {
         let thumbnail = null
         
         if (USE_GITHUB && bookId) {
-            thumbnail = findPageThumbnailFromBlobs(thumbnails, i, bookName)
+            thumbnail = findPageThumbnailFromBlobs(thumbnails, i)
             if (i === 1) console.log(`📸 Page 1 thumbnail (GitHub):`, thumbnail)
         } else if (USE_BLOB) {
-            thumbnail = findPageThumbnailFromBlobs(thumbnails, i, bookName)
+            thumbnail = findPageThumbnailFromBlobs(thumbnails, i)
             if (i === 1) console.log(`📸 Page 1 thumbnail (Blob):`, thumbnail)
         } else {
             const thumbnailsPath = path.join(THUMBNAILS_PATH, bookName)
@@ -168,7 +168,7 @@ async function createPagesData(numPages, existingData = [], bookName) {
     return pagesData
 }
 
-function findPageThumbnailFromBlobs(thumbnails, pageNumber, _bookName) {
+function findPageThumbnailFromBlobs(thumbnails, pageNumber) {
     const possibleNames = [
         `page-${pageNumber}.jpg`,
         `page-${pageNumber}.jpeg`,
