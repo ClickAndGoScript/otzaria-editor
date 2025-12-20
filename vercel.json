@@ -1,7 +1,8 @@
 {
-  "trailingSlash": false,
+  "redirects": [
+    { "source": "/forum", "destination": "/forum/", "permanent": false }
+  ],
   "rewrites": [
-    { "source": "/forum", "destination": "http://72.62.95.11:4567/" },
     { "source": "/forum/:path*", "destination": "http://72.62.95.11:4567/:path*" }
   ],
   "headers": [
