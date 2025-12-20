@@ -1,11 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-
-  // 🔴 חשוב
-  trailingSlash: false,
-  skipTrailingSlashRedirect: true,
-
   images: {
     remotePatterns: [
       {
