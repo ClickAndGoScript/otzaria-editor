@@ -1,8 +1,16 @@
 {
-  "framework": "nextjs",
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/forum", "destination": "http://72.62.95.11:4567" },
-    { "source": "/forum/(.*)", "destination": "http://72.62.95.11:4567/$1" }
+    { "source": "/forum", "destination": "http://72.62.95.11:4567/" },
+    { "source": "/forum/:path*", "destination": "http://72.62.95.11:4567/:path*" }
+  ],
+  "headers": [
+    {
+      "source": "/forum/:path*",
+      "headers": [
+        { "key": "X-Forwarded-Proto", "value": "https" },
+        { "key": "X-Forwarded-Host", "value": "www.otzaria.org" }
+      ]
+    }
   ]
 }
