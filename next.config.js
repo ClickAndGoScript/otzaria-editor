@@ -15,6 +15,18 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/forum/:path*',
+        destination: 'http://72.62.95.11:4567/:path*',
+      },
+      {
+        source: '/forum',
+        destination: 'http://72.62.95.11:4567/',
+      },
+    ]
+  },
 }
 
 export default nextConfig

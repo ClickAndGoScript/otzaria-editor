@@ -12,7 +12,8 @@ export default function OtzariaSoftwareHeader() {
     { href: '/docs', label: 'מדריכים' },
     { href: '/faq', label: 'שאלות נפוצות' },
     { href: '/donate', label: 'תרומות' },
-    { href: '/about', label: 'אודות' }
+    { href: '/about', label: 'אודות' },
+    { href: '/forum', label: 'פורום' }
   ]
 
   return (
