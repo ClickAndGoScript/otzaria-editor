@@ -1,5 +1,6 @@
 {
   "rewrites": [
-    { "source": "/forum/:path*", "destination": "http://72.62.95.11:4567/:path*" }
+    { "source": "/forum/:path*", "destination": "http://72.62.95.11:4567/:path*" },
+    { "source": "/assets/:path*", "destination": "http://72.62.95.11:4567/assets/:path*" }
   ]
 }
