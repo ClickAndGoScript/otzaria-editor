@@ -1,8 +1,5 @@
 {
-  "redirects": [
-    { "source": "/forum$", "destination": "/forum/", "permanent": false }
-  ],
   "rewrites": [
-    { "source": "/forum/:path+", "destination": "http://72.62.95.11:4567/:path*" }
+    { "source": "/forum/:path*", "destination": "https://72.62.95.11:4567/:path*" }
   ]
 }
