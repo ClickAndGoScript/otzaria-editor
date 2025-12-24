@@ -13,7 +13,7 @@ export default function OtzariaSoftwareHeader() {
     { href: '/faq', label: 'שאלות נפוצות' },
     { href: '/donate', label: 'תרומות' },
     { href: '/about', label: 'אודות' },
-    { href: '/forum', label: 'פורום' }
+    { href: 'https://forum.otzaria.org', label: 'פורום' }
   ]
 
   return (
