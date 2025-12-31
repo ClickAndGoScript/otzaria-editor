@@ -172,7 +172,7 @@ export default function LibraryBooksPage() {
               <p className="text-on-surface/150 leading-relaxed" style={{ marginBottom: '20px' }}>
                 ספרייה זו כוללת ספרים מאתר <a href="https://hebrewbooks.org/" target="_blank" rel="noopener noreferrer" className="font-bold text-primary hover:text-accent underline transition-colors">hebrewbooks</a> שמיועדים להוספה למאגר אוצריא.
                 <br />
-                יחד נגדיל את מאגר הטקסט התורני הגדול בעולם!
+                יחד נגדיל את מאגר הטקסט התורני החינמי הגדול בעולם!
               </p>
               
               <div className="relative mb-4">
